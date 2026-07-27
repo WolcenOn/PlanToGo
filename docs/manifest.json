@@ -1,0 +1,10 @@
+{
+  "name": "PlanToGo",
+  "short_name": "PlanToGo",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#111827",
+  "description": "Organiza planes, fechas y tareas con tu grupo."
+}
