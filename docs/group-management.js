@@ -109,3 +109,9 @@ form.addEventListener("submit", async event => {
     await loadDashboard();
   } catch (error) { setStatus(error.message === "Failed to fetch" ? "No se pudo conectar con Railway." : error.message, true); }
 }, true);
+
+const wizardStyle = document.createElement("link");
+wizardStyle.rel = "stylesheet";
+wizardStyle.href = "./event-wizard.css?v=11";
+document.head.append(wizardStyle);
+import("./event-wizard.js?v=11").catch(error => console.error("No se pudo cargar el asistente", error));
