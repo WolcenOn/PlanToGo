@@ -28,11 +28,33 @@ type createPlanRequest struct {
 	Address       string `json:"address"`
 }
 
+type dashboardPlan struct {
+	ID            string     `json:"id"`
+	Title         string     `json:"title"`
+	Description   string     `json:"description"`
+	Type          string     `json:"type"`
+	Status        string     `json:"status"`
+	ConfirmedDate *time.Time `json:"confirmed_date"`
+	LocationName  *string    `json:"location_name"`
+	GroupID       *string    `json:"group_id"`
+	GroupName     *string    `json:"group_name"`
+	Ownership     string     `json:"ownership"`
+}
+
+type dashboardGroup struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Role        string `json:"role"`
+	PlanCount   int    `json:"plan_count"`
+}
+
 func NewRouter(db *pgxpool.Pool, origins []string) http.Handler {
 	api := &API{db: db}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", api.health)
 	mux.HandleFunc("GET /api/health", api.health)
+	mux.HandleFunc("GET /api/v1/dashboard", api.dashboard)
 	mux.HandleFunc("POST /api/v1/plans", api.createPlan)
 	mux.HandleFunc("GET /api/v1/public/plans/{token}", api.getPublicPlan)
 	return cors(origins, securityHeaders(mux))
@@ -44,6 +66,91 @@ func (api *API) health(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (api *API) dashboard(w http.ResponseWriter, r *http.Request) {
+	email := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("email")))
+	if email == "" {
+		writeError(w, http.StatusBadRequest, "email is required")
+		return
+	}
+
+	plans := make([]dashboardPlan, 0)
+	rows, err := api.db.Query(r.Context(), `
+		SELECT p.id, p.title, p.description, p.type, p.status, p.confirmed_date,
+		       p.location_name, p.group_id, g.name,
+		       CASE WHEN p.created_by = u.id THEN 'own' ELSE 'friend' END AS ownership
+		FROM users u
+		JOIN plans p ON p.created_by = u.id
+		             OR p.group_id IN (SELECT gm.group_id FROM group_members gm WHERE gm.user_id = u.id)
+		LEFT JOIN groups g ON g.id = p.group_id
+		WHERE u.email = $1
+		ORDER BY p.confirmed_date NULLS LAST, p.created_at DESC`, email)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not load dashboard")
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var plan dashboardPlan
+		if err := rows.Scan(
+			&plan.ID,
+			&plan.Title,
+			&plan.Description,
+			&plan.Type,
+			&plan.Status,
+			&plan.ConfirmedDate,
+			&plan.LocationName,
+			&plan.GroupID,
+			&plan.GroupName,
+			&plan.Ownership,
+		); err != nil {
+			writeError(w, http.StatusInternalServerError, "could not load dashboard")
+			return
+		}
+		plans = append(plans, plan)
+	}
+	if err := rows.Err(); err != nil {
+		writeError(w, http.StatusInternalServerError, "could not load dashboard")
+		return
+	}
+
+	groups := make([]dashboardGroup, 0)
+	groupRows, err := api.db.Query(r.Context(), `
+		SELECT g.id, g.name, g.description, gm.role,
+		       COUNT(p.id)::int AS plan_count
+		FROM users u
+		JOIN group_members gm ON gm.user_id = u.id
+		JOIN groups g ON g.id = gm.group_id
+		LEFT JOIN plans p ON p.group_id = g.id
+		WHERE u.email = $1
+		GROUP BY g.id, g.name, g.description, gm.role
+		ORDER BY g.name`, email)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not load groups")
+		return
+	}
+	defer groupRows.Close()
+
+	for groupRows.Next() {
+		var group dashboardGroup
+		if err := groupRows.Scan(&group.ID, &group.Name, &group.Description, &group.Role, &group.PlanCount); err != nil {
+			writeError(w, http.StatusInternalServerError, "could not load groups")
+			return
+		}
+		groups = append(groups, group)
+	}
+	if err := groupRows.Err(); err != nil {
+		writeError(w, http.StatusInternalServerError, "could not load groups")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"email":  email,
+		"plans":  plans,
+		"groups": groups,
+	})
 }
 
 func (api *API) createPlan(w http.ResponseWriter, r *http.Request) {
@@ -200,15 +307,11 @@ func securityHeaders(next http.Handler) http.Handler {
 func cors(origins []string, next http.Handler) http.Handler {
 	allowed := make(map[string]struct{}, len(origins))
 	for _, origin := range origins {
-		normalized := strings.TrimRight(strings.TrimSpace(origin), "/")
-		if normalized != "" {
-			allowed[normalized] = struct{}{}
-		}
+		allowed[strings.TrimRight(strings.TrimSpace(origin), "/")] = struct{}{}
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		origin := strings.TrimRight(strings.TrimSpace(r.Header.Get("Origin")), "/")
-		if origin != "" {
+		if origin := strings.TrimRight(strings.TrimSpace(r.Header.Get("Origin")), "/"); origin != "" {
 			if _, ok := allowed[origin]; ok {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 				w.Header().Set("Vary", "Origin")
