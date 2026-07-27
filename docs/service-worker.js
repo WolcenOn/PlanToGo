@@ -1,12 +1,12 @@
-const CACHE = "plantogo-shell-v3";
+const CACHE = "plantogo-shell-v4";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=3",
-  "./config.js?v=3",
-  "./app.js?v=3",
-  "./interactions.js?v=3",
-  "./manifest.json?v=3"
+  "./styles.css?v=4",
+  "./flexible.css?v=4",
+  "./config.js?v=4",
+  "./app.js?v=4",
+  "./manifest.json?v=4"
 ];
 
 self.addEventListener("install", event => {
