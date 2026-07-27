@@ -62,10 +62,15 @@ function renderDetailOptions() {
 }
 
 function taskButton(task) {
-  if (task.status === "completed") return currentDetail.is_owner ? `<button data-task-action="reopen" data-task-id="${task.id}" class="task-link">Reabrir</button>` : "";
-  if (task.is_mine) return `<button data-task-action="complete" data-task-id="${task.id}" class="task-link">Completar</button><button data-task-action="release" data-task-id="${task.id}" class="task-link">Liberar</button>`;
-  if (!task.assigned_name) return `<button data-task-action="claim" data-task-id="${task.id}" class="task-link">Me encargo</button>`;
-  return "";
+  const canDelete = currentDetail.is_owner || task.is_mine;
+  const deleteButton = canDelete ? `<button data-task-action="delete" data-task-id="${task.id}" class="task-link danger-link">Eliminar</button>` : "";
+  if (task.status === "completed") {
+    const reopen = currentDetail.is_owner ? `<button data-task-action="reopen" data-task-id="${task.id}" class="task-link">Reabrir</button>` : "";
+    return `${reopen}${deleteButton}`;
+  }
+  if (task.is_mine) return `<button data-task-action="complete" data-task-id="${task.id}" class="task-link">Completar</button><button data-task-action="release" data-task-id="${task.id}" class="task-link">Liberar</button>${deleteButton}`;
+  if (!task.assigned_name) return `<button data-task-action="claim" data-task-id="${task.id}" class="task-link">Me encargo</button>${deleteButton}`;
+  return deleteButton;
 }
 
 function renderDetailTasks() {
@@ -140,10 +145,12 @@ document.querySelector("#save-detail-votes").addEventListener("click", async () 
 
 document.querySelector("#add-task-form").addEventListener("submit", async event => {
   event.preventDefault();
-  const input = event.currentTarget.elements.title;
+  const taskForm = event.currentTarget;
+  const input = taskForm.elements.title;
+  const assignSelf = taskForm.elements.assign_self.checked;
   try {
-    await fetchJSON(`${API_BASE_URL}/api/v1/plans/${currentDetail.id}/tasks`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actor_email: state.profile.email, title: input.value }) });
-    input.value = "";
+    await fetchJSON(`${API_BASE_URL}/api/v1/plans/${currentDetail.id}/tasks`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actor_email: state.profile.email, title: input.value, assign_self: assignSelf }) });
+    taskForm.reset();
     await openPlanDetail(currentDetail.id);
   } catch (error) { setDetailStatus(error.message, true); }
 });
@@ -151,8 +158,15 @@ document.querySelector("#add-task-form").addEventListener("submit", async event 
 detailTasks.addEventListener("click", async event => {
   const button = event.target.closest("[data-task-action]");
   if (!button) return;
+  const action = button.dataset.taskAction;
   try {
-    await fetchJSON(`${API_BASE_URL}/api/v1/plans/${currentDetail.id}/tasks/${button.dataset.taskId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actor_email: state.profile.email, action: button.dataset.taskAction }) });
+    if (action === "delete") {
+      if (!confirm("¿Eliminar esta tarea?")) return;
+      const response = await fetch(`${API_BASE_URL}/api/v1/plans/${currentDetail.id}/tasks/${button.dataset.taskId}?email=${encodeURIComponent(state.profile.email)}`, { method: "DELETE" });
+      if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || `Error ${response.status}`);
+    } else {
+      await fetchJSON(`${API_BASE_URL}/api/v1/plans/${currentDetail.id}/tasks/${button.dataset.taskId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actor_email: state.profile.email, action }) });
+    }
     await openPlanDetail(currentDetail.id);
   } catch (error) { setDetailStatus(error.message, true); }
 });
