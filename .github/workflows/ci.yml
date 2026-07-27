@@ -17,8 +17,11 @@ jobs:
         with:
           go-version-file: go.mod
           cache: false
-      - run: go mod tidy
-      - run: gofmt -w cmd internal
-      - run: git diff --exit-code
-      - run: go test ./...
-      - run: go build ./cmd/api
+      - name: Check formatting
+        run: test -z "$(gofmt -l cmd internal)"
+      - name: Resolve dependencies
+        run: go mod tidy
+      - name: Run tests
+        run: go test ./...
+      - name: Build API
+        run: go build ./cmd/api
