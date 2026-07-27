@@ -1,6 +1,6 @@
 document.addEventListener("click", async event => {
   const button = event.target.closest('[data-occurrence-action="edit"]');
-  if (!button || !window.currentDetail?.id) return;
+  if (!button || typeof currentDetail === "undefined" || !currentDetail?.id) return;
   event.preventDefault();
   event.stopImmediatePropagation();
   const row = button.closest("[data-occurrence-id]");
