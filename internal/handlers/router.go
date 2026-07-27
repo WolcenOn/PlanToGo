@@ -200,11 +200,15 @@ func securityHeaders(next http.Handler) http.Handler {
 func cors(origins []string, next http.Handler) http.Handler {
 	allowed := make(map[string]struct{}, len(origins))
 	for _, origin := range origins {
-		allowed[origin] = struct{}{}
+		normalized := strings.TrimRight(strings.TrimSpace(origin), "/")
+		if normalized != "" {
+			allowed[normalized] = struct{}{}
+		}
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if origin := r.Header.Get("Origin"); origin != "" {
+		origin := strings.TrimRight(strings.TrimSpace(r.Header.Get("Origin")), "/")
+		if origin != "" {
 			if _, ok := allowed[origin]; ok {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 				w.Header().Set("Vary", "Origin")
