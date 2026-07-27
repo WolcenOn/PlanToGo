@@ -1,20 +1,23 @@
-const CACHE = "plantogo-shell-v11";
+const CACHE = "plantogo-shell-v12";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=10",
-  "./smart-modes.css?v=10",
-  "./plan-detail.css?v=10",
-  "./group-management.css?v=10",
-  "./event-wizard.css?v=11",
-  "./config.js?v=10",
-  "./app.js?v=10",
-  "./smart-modes.js?v=10",
-  "./plan-detail.js?v=10",
-  "./groups.js?v=10",
-  "./group-management.js?v=10",
-  "./event-wizard.js?v=11",
-  "./manifest.json?v=10"
+  "./styles.css?v=12",
+  "./smart-modes.css?v=12",
+  "./plan-detail.css?v=12",
+  "./group-management.css?v=12",
+  "./event-wizard.css?v=12",
+  "./recurrence-pages.css?v=12",
+  "./config.js?v=12",
+  "./app.js?v=12",
+  "./smart-modes.js?v=12",
+  "./plan-detail.js?v=12",
+  "./groups.js?v=12",
+  "./group-management.js?v=12",
+  "./event-wizard.js?v=12",
+  "./recurrence-ui.js?v=12",
+  "./recurrence-editor-fix.js?v=12",
+  "./manifest.json?v=12"
 ];
 
 self.addEventListener("install", event => {

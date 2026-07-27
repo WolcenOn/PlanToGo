@@ -1,0 +1,95 @@
+#plan-dialog {
+  width: min(980px, calc(100vw - 24px));
+  max-width: 980px;
+  height: min(820px, calc(100vh - 24px));
+  max-height: none;
+  padding: 0;
+  overflow: hidden;
+}
+
+#plan-dialog > form {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  height: 100%;
+}
+
+#plan-dialog .dialog-heading,
+#plan-dialog .wizard-stepper,
+#plan-dialog .dialog-actions,
+#plan-dialog #form-status {
+  padding-left: 28px;
+  padding-right: 28px;
+}
+
+#plan-dialog .wizard-step,
+#plan-dialog .wizard-template-panel {
+  overflow: auto;
+  padding: 24px 28px 32px;
+  animation: wizard-page-in .18s ease-out;
+}
+
+#plan-dialog .wizard-step[hidden],
+#plan-dialog .wizard-template-panel[hidden] { display: none !important; }
+
+.wizard-stepper {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 0;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.wizard-stepper li {
+  opacity: .55;
+  list-style: none;
+  text-align: center;
+}
+
+.wizard-stepper li.active { opacity: 1; font-weight: 700; }
+
+.recurrence-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.recurrence-rule-list { display: grid; gap: 8px; }
+
+.recurrence-rule {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 1fr) 130px 130px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #dbe3ef;
+  border-radius: 12px;
+}
+
+.occurrence-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.occurrence-row small { display: block; color: #64748b; margin-top: 3px; }
+.occurrence-row button { margin-left: 8px; }
+
+@keyframes wizard-page-in {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-width: 700px) {
+  #plan-dialog { width: 100vw; height: 100dvh; max-width: none; margin: 0; border-radius: 0; }
+  .wizard-stepper li { font-size: 12px; }
+  .recurrence-rule { grid-template-columns: auto 1fr; }
+  .recurrence-rule input[type="time"] { grid-column: span 1; }
+  .occurrence-row { align-items: flex-start; flex-direction: column; }
+}
