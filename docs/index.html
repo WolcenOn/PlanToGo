@@ -3,38 +3,131 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#111827">
+  <meta name="theme-color" content="#172554">
   <title>PlanToGo</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <main class="container">
-    <header><span class="eyebrow">PlanToGo</span><h1>Organiza el plan. Comparte el enlace.</h1><p>Crea un plan fijo y compártelo con tu grupo sin depender de un chat.</p></header>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="./" aria-label="PlanToGo inicio"><span class="brand-mark">P</span><span>PlanToGo</span></a>
+      <nav class="nav-list" aria-label="Navegación principal">
+        <button class="nav-item active" data-scroll="dashboard-view">Resumen</button>
+        <button class="nav-item" data-scroll="plans-section">Planes</button>
+        <button class="nav-item" data-scroll="groups-section">Grupos</button>
+        <button class="nav-item" data-scroll="calendar-section">Calendario</button>
+      </nav>
+      <div class="legend-card">
+        <strong>Leyenda</strong>
+        <span><i class="legend-dot own"></i>Plan propio</span>
+        <span><i class="legend-dot friend"></i>Plan de amigos</span>
+        <span><i class="legend-pill fixed"></i>Fecha fija</span>
+        <span><i class="legend-pill flexible"></i>En votación</span>
+      </div>
+    </aside>
 
-    <section id="create-view" class="card">
-      <h2>Crear un plan</h2>
-      <form id="plan-form">
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Tu espacio</p>
+          <h1>Dashboard</h1>
+        </div>
+        <div class="topbar-actions">
+          <button id="profile-button" class="profile-button" type="button">Configurar perfil</button>
+          <button id="new-plan-button" class="primary-button" type="button">+ Nuevo plan</button>
+        </div>
+      </header>
+
+      <section id="dashboard-view">
+        <div id="welcome-panel" class="welcome-panel">
+          <div>
+            <p class="eyebrow">Empieza aquí</p>
+            <h2>Identifica tus planes con tu email</h2>
+            <p>Usaremos el mismo email con el que creas planes para mostrar tu agenda. No es todavía un inicio de sesión.</p>
+          </div>
+          <form id="profile-form" class="profile-form">
+            <label>Nombre<input name="name" required maxlength="100" placeholder="Tu nombre"></label>
+            <label>Email<input name="email" type="email" required placeholder="tu@email.com"></label>
+            <button class="primary-button" type="submit">Abrir dashboard</button>
+          </form>
+        </div>
+
+        <div id="dashboard-content" hidden>
+          <section class="stats-grid" aria-label="Resumen de actividad">
+            <article class="stat-card"><span>Próximos planes</span><strong id="stat-upcoming">0</strong><small>Con fecha confirmada</small></article>
+            <article class="stat-card"><span>Planes propios</span><strong id="stat-own">0</strong><small>Creados por ti</small></article>
+            <article class="stat-card"><span>De amigos</span><strong id="stat-friends">0</strong><small>Compartidos contigo</small></article>
+            <article class="stat-card"><span>Grupos</span><strong id="stat-groups">0</strong><small>Equipos activos</small></article>
+          </section>
+
+          <section id="plans-section" class="section-block">
+            <div class="section-heading">
+              <div><p class="eyebrow">Agenda</p><h2>Tus próximos planes</h2></div>
+              <div class="filter-row" role="group" aria-label="Filtrar planes">
+                <button class="filter-button active" data-filter="all">Todos</button>
+                <button class="filter-button" data-filter="own">Propios</button>
+                <button class="filter-button" data-filter="friend">Amigos</button>
+                <button class="filter-button" data-filter="fixed">Fijos</button>
+                <button class="filter-button" data-filter="flexible">Flexibles</button>
+              </div>
+            </div>
+            <div id="plans-list" class="plans-grid"></div>
+            <p id="plans-empty" class="empty-state" hidden>No hay planes para este filtro.</p>
+          </section>
+
+          <section id="groups-section" class="section-block">
+            <div class="section-heading"><div><p class="eyebrow">Tu gente</p><h2>Grupos</h2></div><button class="secondary-button" type="button" disabled>+ Crear grupo · Próximamente</button></div>
+            <div id="groups-list" class="groups-grid"></div>
+            <p id="groups-empty" class="empty-state" hidden>Todavía no perteneces a ningún grupo.</p>
+          </section>
+
+          <section id="calendar-section" class="section-block calendar-card">
+            <div class="calendar-toolbar">
+              <div><p class="eyebrow">Vista temporal</p><h2 id="calendar-title">Calendario</h2></div>
+              <div class="calendar-actions">
+                <button id="calendar-prev" class="icon-button" aria-label="Periodo anterior">←</button>
+                <button id="calendar-today" class="secondary-button">Hoy</button>
+                <button id="calendar-next" class="icon-button" aria-label="Periodo siguiente">→</button>
+                <div class="view-switch" role="group" aria-label="Vista del calendario">
+                  <button class="view-button active" data-view="month">Mes</button>
+                  <button class="view-button" data-view="week">Semana</button>
+                  <button class="view-button" data-view="day">Día</button>
+                </div>
+              </div>
+            </div>
+            <div id="calendar" class="calendar"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="plan-view" class="public-plan card" hidden>
+        <a href="./">← Volver al dashboard</a>
+        <p class="eyebrow">Plan compartido</p>
+        <h2 id="plan-title"></h2>
+        <p id="plan-description"></p>
+        <dl><dt>Fecha</dt><dd id="plan-date"></dd><dt>Lugar</dt><dd id="plan-location"></dd><dt>Dirección</dt><dd id="plan-address"></dd></dl>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="plan-dialog" class="dialog">
+    <form id="plan-form" method="dialog">
+      <div class="dialog-heading"><div><p class="eyebrow">Nuevo plan</p><h2>Crear plan fijo</h2></div><button id="close-dialog" class="icon-button" type="button" aria-label="Cerrar">×</button></div>
+      <div class="form-grid">
         <label>Tu nombre<input name="creator_name" required maxlength="100"></label>
         <label>Tu email<input name="creator_email" type="email" required></label>
-        <label>Título<input name="title" required maxlength="160" placeholder="Cena del sábado"></label>
-        <label>Descripción<textarea name="description" rows="3"></textarea></label>
+        <label class="full-width">Título<input name="title" required maxlength="160" placeholder="Cena del sábado"></label>
+        <label class="full-width">Descripción<textarea name="description" rows="3"></textarea></label>
         <label>Fecha y hora<input name="confirmed_date" type="datetime-local" required></label>
         <label>Lugar<input name="location_name" placeholder="Casa de Ana"></label>
-        <label>Dirección<input name="address" placeholder="Calle, ciudad"></label>
-        <button type="submit">Crear plan</button>
-      </form>
+        <label class="full-width">Dirección<input name="address" placeholder="Calle, ciudad"></label>
+      </div>
       <p id="form-status" class="status" role="status"></p>
-    </section>
+      <div class="dialog-actions"><button id="cancel-dialog" class="secondary-button" type="button">Cancelar</button><button class="primary-button" type="submit">Crear plan</button></div>
+    </form>
+  </dialog>
 
-    <section id="plan-view" class="card" hidden>
-      <a href="./">← Crear otro plan</a>
-      <p class="eyebrow">Plan compartido</p>
-      <h2 id="plan-title"></h2>
-      <p id="plan-description"></p>
-      <dl><dt>Fecha</dt><dd id="plan-date"></dd><dt>Lugar</dt><dd id="plan-location"></dd><dt>Dirección</dt><dd id="plan-address"></dd></dl>
-    </section>
-  </main>
   <script src="./config.js"></script>
   <script src="./app.js" defer></script>
 </body>
