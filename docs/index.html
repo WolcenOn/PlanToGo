@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#172554">
   <title>PlanToGo</title>
-  <link rel="manifest" href="./manifest.json?v=7">
-  <link rel="stylesheet" href="./styles.css?v=7">
-  <link rel="stylesheet" href="./smart-modes.css?v=7">
-  <link rel="stylesheet" href="./plan-detail.css?v=7">
+  <link rel="manifest" href="./manifest.json?v=8">
+  <link rel="stylesheet" href="./styles.css?v=8">
+  <link rel="stylesheet" href="./smart-modes.css?v=8">
+  <link rel="stylesheet" href="./plan-detail.css?v=8">
 </head>
 <body>
   <div class="app-shell">
@@ -97,9 +97,22 @@
     </div>
   </dialog>
 
-  <script src="./config.js?v=7"></script>
-  <script src="./app.js?v=7" defer></script>
-  <script src="./smart-modes.js?v=7" defer></script>
-  <script src="./plan-detail.js?v=7" defer></script>
+  <dialog id="group-dialog" class="dialog">
+    <form id="group-form">
+      <div class="dialog-heading"><div><p class="eyebrow">Nuevo grupo</p><h2>Crear grupo</h2></div><button id="close-group-dialog" class="icon-button" type="button" aria-label="Cerrar">×</button></div>
+      <div class="form-grid">
+        <label class="full-width">Nombre del grupo<input name="name" required maxlength="120" placeholder="Amigos del pádel"></label>
+        <label class="full-width">Descripción<textarea name="description" rows="3" placeholder="Planes, integrantes o finalidad del grupo"></textarea></label>
+      </div>
+      <p id="group-status" class="status" role="status"></p>
+      <div class="dialog-actions"><button id="cancel-group-dialog" class="secondary-button" type="button">Cancelar</button><button class="primary-button" type="submit">Crear grupo</button></div>
+    </form>
+  </dialog>
+
+  <script src="./config.js?v=8"></script>
+  <script src="./app.js?v=8" defer></script>
+  <script src="./smart-modes.js?v=8" defer></script>
+  <script src="./plan-detail.js?v=8" defer></script>
+  <script src="./groups.js?v=8" defer></script>
 </body>
 </html>
