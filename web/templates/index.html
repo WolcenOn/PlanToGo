@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>PlanToGo</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script src="/static/js/app.js" defer></script>
+</head>
+<body>
+  <header class="hero">
+    <nav class="nav" aria-label="Principal">
+      <strong>PlanToGo</strong>
+      <a href="#features">Cómo funciona</a>
+    </nav>
+    <section class="hero__content">
+      <p class="eyebrow">Planes en grupo, sin caos</p>
+      <h1>De la votación a la quedada.</h1>
+      <p>Elige fecha, reparte tareas y comparte la ubicación desde un único enlace.</p>
+      <button id="create-plan" type="button">Crear un plan</button>
+    </section>
+  </header>
+  <main id="features" class="features">
+    <article><h2>Votad fecha</h2><p>Propón opciones y encuentra la mayor coincidencia.</p></article>
+    <article><h2>Repartid tareas</h2><p>Cada participante puede asignarse lo que llevará.</p></article>
+    <article><h2>Llegad juntos</h2><p>Dirección, mapa y acceso directo a cómo llegar.</p></article>
+  </main>
+  <p id="status" class="status" role="status"></p>
+</body>
+</html>
