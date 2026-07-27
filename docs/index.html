@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#172554">
   <title>PlanToGo</title>
-  <link rel="manifest" href="./manifest.json?v=4">
-  <link rel="stylesheet" href="./styles.css?v=4">
+  <link rel="manifest" href="./manifest.json?v=5">
+  <link rel="stylesheet" href="./styles.css?v=5">
+  <link rel="stylesheet" href="./smart-modes.css?v=5">
 </head>
 <body>
   <div class="app-shell">
@@ -29,8 +30,8 @@
 
       <section id="dashboard-view">
         <div id="welcome-panel" class="welcome-panel">
-          <div><p class="eyebrow">Empieza aquí</p><h2>Identifica tus planes con tu email</h2><p>Usaremos el mismo email con el que creas planes para mostrar tu agenda. No es todavía un inicio de sesión.</p></div>
-          <form id="profile-form" class="profile-form"><label>Nombre<input name="name" required maxlength="100" placeholder="Tu nombre"></label><label>Email<input name="email" type="email" required placeholder="tu@email.com"></label><button class="primary-button" type="submit">Abrir dashboard</button></form>
+          <div><p class="eyebrow">Empieza aquí</p><h2>Identifica tus planes con tu email</h2><p>Este formulario solo se muestra la primera vez en este dispositivo. Después entra directamente en tu dashboard.</p></div>
+          <form id="profile-form" class="profile-form"><label>Nombre<input name="name" required maxlength="100" placeholder="Tu nombre"></label><label>Email<input name="email" type="email" required placeholder="tu@email.com"></label><button class="primary-button" type="submit">Guardar y abrir dashboard</button></form>
         </div>
 
         <div id="dashboard-content" hidden>
@@ -72,14 +73,15 @@
         <label class="full-width">Título<input name="title" required maxlength="160" placeholder="Cena del sábado"></label><label class="full-width">Descripción<textarea name="description" rows="3"></textarea></label>
         <label>Tipo de plan<select id="plan-type" name="type"><option value="fixed">Fecha fija</option><option value="flexible">Varias fechas para votar</option></select></label>
         <label id="fixed-date-field">Fecha y hora<input name="confirmed_date" type="datetime-local"></label>
-        <div id="flexible-dates-field" class="full-width flexible-builder" hidden><div class="builder-heading"><div><strong>Opciones de fecha</strong><small>Añade al menos dos posibilidades.</small></div><button id="add-date-option" class="secondary-button" type="button">+ Añadir fecha</button></div><div id="date-option-inputs"></div></div>
+        <div id="flexible-dates-field" class="full-width flexible-builder" hidden><div class="builder-heading"><div><strong>Opciones de fecha</strong><small>Añade al menos dos posibilidades.</small></div><button id="add-date-option" class="secondary-button" type="button">+ Añadir opción</button></div><div id="date-option-inputs"></div></div>
         <label>Lugar<input name="location_name" placeholder="Casa de Ana"></label><label class="full-width">Dirección<input name="address" placeholder="Calle, ciudad"></label>
       </div>
       <p id="form-status" class="status" role="status"></p><div class="dialog-actions"><button id="cancel-dialog" class="secondary-button" type="button">Cancelar</button><button class="primary-button" type="submit">Crear y compartir</button></div>
     </form>
   </dialog>
 
-  <script src="./config.js?v=4"></script>
-  <script src="./app.js?v=4" defer></script>
+  <script src="./config.js?v=5"></script>
+  <script src="./app.js?v=5" defer></script>
+  <script src="./smart-modes.js?v=5" defer></script>
 </body>
 </html>

@@ -31,7 +31,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer db.Close()
-	if err := database.Migrate(ctx, db, "migrations/000001_init.up.sql"); err != nil {
+	if err := database.Migrate(ctx, db, "migrations"); err != nil {
 		logger.Error("run migrations", "error", err)
 		os.Exit(1)
 	}
