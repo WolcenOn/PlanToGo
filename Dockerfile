@@ -9,7 +9,7 @@ FROM alpine:3.21
 RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
 COPY --from=builder /plantogo /usr/local/bin/plantogo
-COPY --from=builder /app/web ./web
+COPY --from=builder /app/migrations ./migrations
 USER app
 EXPOSE 8080
 CMD ["plantogo"]
