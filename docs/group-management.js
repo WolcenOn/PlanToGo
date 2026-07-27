@@ -88,8 +88,9 @@ form.addEventListener("submit", async event => {
   data.group_ids = [...document.querySelectorAll("#plan-group-options input:checked")].map(input => input.value);
   data.tasks = window.PlanWizard?.getTasks?.() || [];
   try {
+    window.PlanRecurrence?.preparePlanData(data);
+    if (!data.confirmed_date && data.type === "fixed") throw new Error("Selecciona la fecha final del evento.");
     if (data.type === "fixed") {
-      if (!data.confirmed_date) throw new Error("Selecciona una fecha y hora.");
       data.confirmed_date = new Date(data.confirmed_date).toISOString();
       data.date_options = [];
     } else {
@@ -98,10 +99,16 @@ form.addEventListener("submit", async event => {
         start_time: new Date(row.querySelector(".option-start").value).toISOString(),
         end_time: new Date(row.querySelector(".option-end").value).toISOString()
       }));
-      if (data.date_options.length < 2) throw new Error("Añade al menos dos opciones completas.");
+      if (data.date_options.length < 2) throw new Error("Añade al menos dos propuestas completas.");
     }
     setStatus("Creando plan…");
     const body = await fetchJSON(`${API_BASE_URL}/api/v1/plans`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+    try {
+      await window.PlanRecurrence?.save(body.id);
+    } catch (recurrenceError) {
+      await fetch(`${API_BASE_URL}/api/v1/plans/${body.id}?email=${encodeURIComponent(data.creator_email)}`, { method: "DELETE" }).catch(() => {});
+      throw recurrenceError;
+    }
     saveProfile({ name: data.creator_name, email: data.creator_email });
     const link = publicURL(body.public_token);
     statusNode.innerHTML = `Plan creado con ${body.task_count || 0} tareas. <a href="${link}">Abrir enlace para compartir</a>`;
@@ -112,6 +119,9 @@ form.addEventListener("submit", async event => {
 
 const wizardStyle = document.createElement("link");
 wizardStyle.rel = "stylesheet";
-wizardStyle.href = "./event-wizard.css?v=11";
+wizardStyle.href = "./event-wizard.css?v=12";
 document.head.append(wizardStyle);
-import("./event-wizard.js?v=11").catch(error => console.error("No se pudo cargar el asistente", error));
+Promise.all([
+  import("./event-wizard.js?v=12"),
+  import("./recurrence-ui.js?v=12")
+]).catch(error => console.error("No se pudo cargar el asistente", error));
