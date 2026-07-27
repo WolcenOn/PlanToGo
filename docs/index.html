@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>PlanToGo</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="container">
+    <header><span class="eyebrow">PlanToGo</span><h1>Organiza el plan. Comparte el enlace.</h1><p>Crea un plan fijo y compártelo con tu grupo sin depender de un chat.</p></header>
+
+    <section id="create-view" class="card">
+      <h2>Crear un plan</h2>
+      <form id="plan-form">
+        <label>Tu nombre<input name="creator_name" required maxlength="100"></label>
+        <label>Tu email<input name="creator_email" type="email" required></label>
+        <label>Título<input name="title" required maxlength="160" placeholder="Cena del sábado"></label>
+        <label>Descripción<textarea name="description" rows="3"></textarea></label>
+        <label>Fecha y hora<input name="confirmed_date" type="datetime-local" required></label>
+        <label>Lugar<input name="location_name" placeholder="Casa de Ana"></label>
+        <label>Dirección<input name="address" placeholder="Calle, ciudad"></label>
+        <button type="submit">Crear plan</button>
+      </form>
+      <p id="form-status" class="status" role="status"></p>
+    </section>
+
+    <section id="plan-view" class="card" hidden>
+      <a href="./">← Crear otro plan</a>
+      <p class="eyebrow">Plan compartido</p>
+      <h2 id="plan-title"></h2>
+      <p id="plan-description"></p>
+      <dl><dt>Fecha</dt><dd id="plan-date"></dd><dt>Lugar</dt><dd id="plan-location"></dd><dt>Dirección</dt><dd id="plan-address"></dd></dl>
+    </section>
+  </main>
+  <script src="./config.js"></script>
+  <script src="./app.js" defer></script>
+</body>
+</html>
