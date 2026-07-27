@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#172554">
   <title>PlanToGo</title>
-  <link rel="manifest" href="./manifest.json?v=3">
-  <link rel="stylesheet" href="./styles.css?v=3">
+  <link rel="manifest" href="./manifest.json?v=4">
+  <link rel="stylesheet" href="./styles.css?v=4">
 </head>
 <body>
   <div class="app-shell">
@@ -18,32 +18,19 @@
         <button type="button" class="nav-item" data-scroll="groups-section">Grupos</button>
         <button type="button" class="nav-item" data-scroll="calendar-section">Calendario</button>
       </nav>
-      <div class="legend-card">
-        <strong>Leyenda</strong>
-        <span><i class="legend-dot own"></i>Plan propio</span>
-        <span><i class="legend-dot friend"></i>Plan de amigos</span>
-        <span><i class="legend-pill fixed"></i>Fecha fija</span>
-        <span><i class="legend-pill flexible"></i>En votación</span>
-      </div>
+      <div class="legend-card"><strong>Leyenda</strong><span><i class="legend-dot own"></i>Plan propio</span><span><i class="legend-dot friend"></i>Plan de amigos</span><span><i class="legend-pill fixed"></i>Fecha fija</span><span><i class="legend-pill flexible"></i>En votación</span></div>
     </aside>
 
     <main class="main-content">
       <header class="topbar">
         <div><p class="eyebrow">Tu espacio</p><h1>Dashboard</h1></div>
-        <div class="topbar-actions">
-          <button id="profile-button" class="profile-button" type="button">Configurar perfil</button>
-          <button id="new-plan-button" class="primary-button" type="button">+ Nuevo plan</button>
-        </div>
+        <div class="topbar-actions"><button id="profile-button" class="profile-button" type="button">Configurar perfil</button><button id="new-plan-button" class="primary-button" type="button">+ Nuevo plan</button></div>
       </header>
 
       <section id="dashboard-view">
         <div id="welcome-panel" class="welcome-panel">
           <div><p class="eyebrow">Empieza aquí</p><h2>Identifica tus planes con tu email</h2><p>Usaremos el mismo email con el que creas planes para mostrar tu agenda. No es todavía un inicio de sesión.</p></div>
-          <form id="profile-form" class="profile-form">
-            <label>Nombre<input name="name" required maxlength="100" placeholder="Tu nombre"></label>
-            <label>Email<input name="email" type="email" required placeholder="tu@email.com"></label>
-            <button class="primary-button" type="submit">Abrir dashboard</button>
-          </form>
+          <form id="profile-form" class="profile-form"><label>Nombre<input name="name" required maxlength="100" placeholder="Tu nombre"></label><label>Email<input name="email" type="email" required placeholder="tu@email.com"></label><button class="primary-button" type="submit">Abrir dashboard</button></form>
         </div>
 
         <div id="dashboard-content" hidden>
@@ -55,40 +42,14 @@
           </section>
 
           <section id="plans-section" class="section-block">
-            <div class="section-heading">
-              <div><p class="eyebrow">Agenda</p><h2>Tus próximos planes</h2></div>
-              <div class="filter-row" role="group" aria-label="Filtrar planes">
-                <button type="button" class="filter-button active" data-filter="all">Todos</button>
-                <button type="button" class="filter-button" data-filter="own">Propios</button>
-                <button type="button" class="filter-button" data-filter="friend">Amigos</button>
-                <button type="button" class="filter-button" data-filter="fixed">Fijos</button>
-                <button type="button" class="filter-button" data-filter="flexible">Flexibles</button>
-              </div>
-            </div>
-            <div id="plans-list" class="plans-grid"></div>
-            <p id="plans-empty" class="empty-state" hidden>No hay planes para este filtro.</p>
+            <div class="section-heading"><div><p class="eyebrow">Agenda</p><h2>Tus próximos planes</h2></div><div class="filter-row" role="group" aria-label="Filtrar planes"><button type="button" class="filter-button active" data-filter="all">Todos</button><button type="button" class="filter-button" data-filter="own">Propios</button><button type="button" class="filter-button" data-filter="friend">Amigos</button><button type="button" class="filter-button" data-filter="fixed">Fijos</button><button type="button" class="filter-button" data-filter="flexible">Flexibles</button></div></div>
+            <div id="plans-list" class="plans-grid"></div><p id="plans-empty" class="empty-state" hidden>No hay planes para este filtro.</p>
           </section>
 
-          <section id="groups-section" class="section-block">
-            <div class="section-heading"><div><p class="eyebrow">Tu gente</p><h2>Grupos</h2></div><button id="new-group-button" class="secondary-button" type="button">+ Crear grupo</button></div>
-            <div id="groups-list" class="groups-grid"></div>
-            <p id="groups-empty" class="empty-state" hidden>Todavía no perteneces a ningún grupo.</p>
-          </section>
+          <section id="groups-section" class="section-block"><div class="section-heading"><div><p class="eyebrow">Tu gente</p><h2>Grupos</h2></div><button id="new-group-button" class="secondary-button" type="button">+ Crear grupo</button></div><div id="groups-list" class="groups-grid"></div><p id="groups-empty" class="empty-state" hidden>Todavía no perteneces a ningún grupo.</p></section>
 
           <section id="calendar-section" class="section-block calendar-card">
-            <div class="calendar-toolbar">
-              <div><p class="eyebrow">Vista temporal</p><h2 id="calendar-title">Calendario</h2></div>
-              <div class="calendar-actions">
-                <button type="button" id="calendar-prev" class="icon-button" aria-label="Periodo anterior">←</button>
-                <button type="button" id="calendar-today" class="secondary-button">Hoy</button>
-                <button type="button" id="calendar-next" class="icon-button" aria-label="Periodo siguiente">→</button>
-                <div class="view-switch" role="group" aria-label="Vista del calendario">
-                  <button type="button" class="view-button active" data-view="month">Mes</button>
-                  <button type="button" class="view-button" data-view="week">Semana</button>
-                  <button type="button" class="view-button" data-view="day">Día</button>
-                </div>
-              </div>
-            </div>
+            <div class="calendar-toolbar"><div><p class="eyebrow">Vista temporal</p><h2 id="calendar-title">Calendario</h2></div><div class="calendar-actions"><button type="button" id="calendar-prev" class="icon-button" aria-label="Periodo anterior">←</button><button type="button" id="calendar-today" class="secondary-button">Hoy</button><button type="button" id="calendar-next" class="icon-button" aria-label="Periodo siguiente">→</button><div class="view-switch" role="group" aria-label="Vista del calendario"><button type="button" class="view-button active" data-view="month">Mes</button><button type="button" class="view-button" data-view="week">Semana</button><button type="button" class="view-button" data-view="day">Día</button></div></div></div>
             <div id="calendar" class="calendar"></div>
           </section>
         </div>
@@ -96,30 +57,29 @@
 
       <section id="plan-view" class="public-plan card" hidden>
         <a href="./">← Volver al dashboard</a><p class="eyebrow">Plan compartido</p><h2 id="plan-title"></h2><p id="plan-description"></p>
-        <dl><dt>Fecha</dt><dd id="plan-date"></dd><dt>Lugar</dt><dd id="plan-location"></dd><dt>Dirección</dt><dd id="plan-address"></dd></dl>
+        <div id="plan-meta" class="public-meta"><p><strong>Fecha:</strong> <span id="plan-date"></span></p><p><strong>Lugar:</strong> <span id="plan-location"></span></p><p><strong>Dirección:</strong> <span id="plan-address"></span></p></div>
+        <div id="participants-panel" class="participants-panel"></div>
+        <form id="vote-form" class="vote-panel" hidden><div class="section-heading"><div><p class="eyebrow">Disponibilidad</p><h3>¿Qué fechas te vienen bien?</h3></div></div><label>Tu nombre<input name="guest_name" required maxlength="100" placeholder="Escribe tu nombre"></label><div id="date-options" class="date-options"></div><p id="vote-status" class="status" role="status"></p><button class="primary-button" type="submit">Guardar disponibilidad</button></form>
       </section>
     </main>
   </div>
 
   <dialog id="plan-dialog" class="dialog">
     <form id="plan-form">
-      <div class="dialog-heading"><div><p class="eyebrow">Nuevo plan</p><h2>Crear plan fijo</h2></div><button id="close-dialog" class="icon-button" type="button" aria-label="Cerrar">×</button></div>
+      <div class="dialog-heading"><div><p class="eyebrow">Nuevo plan</p><h2>Crear plan</h2></div><button id="close-dialog" class="icon-button" type="button" aria-label="Cerrar">×</button></div>
       <div class="form-grid">
-        <label>Tu nombre<input name="creator_name" required maxlength="100"></label>
-        <label>Tu email<input name="creator_email" type="email" required></label>
-        <label class="full-width">Título<input name="title" required maxlength="160" placeholder="Cena del sábado"></label>
-        <label class="full-width">Descripción<textarea name="description" rows="3"></textarea></label>
-        <label>Fecha y hora<input name="confirmed_date" type="datetime-local" required></label>
-        <label>Lugar<input name="location_name" placeholder="Casa de Ana"></label>
-        <label class="full-width">Dirección<input name="address" placeholder="Calle, ciudad"></label>
+        <label>Tu nombre<input name="creator_name" required maxlength="100"></label><label>Tu email<input name="creator_email" type="email" required></label>
+        <label class="full-width">Título<input name="title" required maxlength="160" placeholder="Cena del sábado"></label><label class="full-width">Descripción<textarea name="description" rows="3"></textarea></label>
+        <label>Tipo de plan<select id="plan-type" name="type"><option value="fixed">Fecha fija</option><option value="flexible">Varias fechas para votar</option></select></label>
+        <label id="fixed-date-field">Fecha y hora<input name="confirmed_date" type="datetime-local"></label>
+        <div id="flexible-dates-field" class="full-width flexible-builder" hidden><div class="builder-heading"><div><strong>Opciones de fecha</strong><small>Añade al menos dos posibilidades.</small></div><button id="add-date-option" class="secondary-button" type="button">+ Añadir fecha</button></div><div id="date-option-inputs"></div></div>
+        <label>Lugar<input name="location_name" placeholder="Casa de Ana"></label><label class="full-width">Dirección<input name="address" placeholder="Calle, ciudad"></label>
       </div>
-      <p id="form-status" class="status" role="status"></p>
-      <div class="dialog-actions"><button id="cancel-dialog" class="secondary-button" type="button">Cancelar</button><button class="primary-button" type="submit">Crear plan</button></div>
+      <p id="form-status" class="status" role="status"></p><div class="dialog-actions"><button id="cancel-dialog" class="secondary-button" type="button">Cancelar</button><button class="primary-button" type="submit">Crear y compartir</button></div>
     </form>
   </dialog>
 
-  <script src="./config.js?v=3"></script>
-  <script src="./app.js?v=3" defer></script>
-  <script src="./interactions.js?v=3" defer></script>
+  <script src="./config.js?v=4"></script>
+  <script src="./app.js?v=4" defer></script>
 </body>
 </html>
