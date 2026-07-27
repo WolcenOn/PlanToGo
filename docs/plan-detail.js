@@ -20,7 +20,9 @@ function setDetailStatus(message, isError = false) {
 async function openPlanDetail(planID) {
   if (!state.profile?.email) return;
   setDetailStatus("Cargando ficha…");
-  if (detailDialog.showModal) detailDialog.showModal(); else detailDialog.setAttribute("open", "");
+  if (!detailDialog.open) {
+    if (detailDialog.showModal) detailDialog.showModal(); else detailDialog.setAttribute("open", "");
+  }
   try {
     currentDetail = await fetchJSON(`${API_BASE_URL}/api/v1/plans/${encodeURIComponent(planID)}?email=${encodeURIComponent(state.profile.email)}`);
     renderPlanDetail();
