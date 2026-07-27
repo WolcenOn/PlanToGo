@@ -1,3 +1,5 @@
+import("./event-wizard-layout-fix.js?v=13").catch(error => console.error("No se pudo reparar el diseño del asistente", error));
+
 document.addEventListener("click", async event => {
   const button = event.target.closest('[data-occurrence-action="edit"]');
   if (!button || typeof currentDetail === "undefined" || !currentDetail?.id) return;
