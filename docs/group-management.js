@@ -86,6 +86,7 @@ form.addEventListener("submit", async event => {
   event.stopImmediatePropagation();
   const data = Object.fromEntries(new FormData(form));
   data.group_ids = [...document.querySelectorAll("#plan-group-options input:checked")].map(input => input.value);
+  data.tasks = window.PlanWizard?.getTasks?.() || [];
   try {
     if (data.type === "fixed") {
       if (!data.confirmed_date) throw new Error("Selecciona una fecha y hora.");
@@ -103,8 +104,14 @@ form.addEventListener("submit", async event => {
     const body = await fetchJSON(`${API_BASE_URL}/api/v1/plans`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
     saveProfile({ name: data.creator_name, email: data.creator_email });
     const link = publicURL(body.public_token);
-    statusNode.innerHTML = `Plan creado. <a href="${link}">Abrir enlace para compartir</a>`;
+    statusNode.innerHTML = `Plan creado con ${body.task_count || 0} tareas. <a href="${link}">Abrir enlace para compartir</a>`;
     await navigator.clipboard?.writeText(link).catch(() => {});
     await loadDashboard();
   } catch (error) { setStatus(error.message === "Failed to fetch" ? "No se pudo conectar con Railway." : error.message, true); }
 }, true);
+
+const wizardStyle = document.createElement("link");
+wizardStyle.rel = "stylesheet";
+wizardStyle.href = "./event-wizard.css?v=11";
+document.head.append(wizardStyle);
+import("./event-wizard.js?v=11").catch(error => console.error("No se pudo cargar el asistente", error));
