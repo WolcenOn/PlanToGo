@@ -1,16 +1,18 @@
-const CACHE = "plantogo-shell-v8";
+const CACHE = "plantogo-shell-v10";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=8",
-  "./smart-modes.css?v=8",
-  "./plan-detail.css?v=8",
-  "./config.js?v=8",
-  "./app.js?v=8",
-  "./smart-modes.js?v=8",
-  "./plan-detail.js?v=8",
-  "./groups.js?v=8",
-  "./manifest.json?v=8"
+  "./styles.css?v=10",
+  "./smart-modes.css?v=10",
+  "./plan-detail.css?v=10",
+  "./group-management.css?v=10",
+  "./config.js?v=10",
+  "./app.js?v=10",
+  "./smart-modes.js?v=10",
+  "./plan-detail.js?v=10",
+  "./groups.js?v=10",
+  "./group-management.js?v=10",
+  "./manifest.json?v=10"
 ];
 
 self.addEventListener("install", event => {
