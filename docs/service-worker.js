@@ -1,5 +1,13 @@
-const CACHE = "plantogo-shell-v2";
-const ASSETS = ["./", "./index.html", "./styles.css", "./config.js", "./app.js", "./manifest.json"];
+const CACHE = "plantogo-shell-v3";
+const ASSETS = [
+  "./",
+  "./index.html",
+  "./styles.css?v=3",
+  "./config.js?v=3",
+  "./app.js?v=3",
+  "./interactions.js?v=3",
+  "./manifest.json?v=3"
+];
 
 self.addEventListener("install", event => {
   self.skipWaiting();
