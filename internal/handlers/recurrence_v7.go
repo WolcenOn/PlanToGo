@@ -10,7 +10,7 @@ import (
 )
 
 type recurrenceRuleInput struct {
-	Weekday  int    `json:"weekday"`
+	Weekday   int    `json:"weekday"`
 	StartTime string `json:"start_time"`
 	EndTime   string `json:"end_time"`
 }
