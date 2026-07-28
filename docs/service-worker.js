@@ -1,4 +1,4 @@
-const CACHE = "plantogo-shell-v26";
+const CACHE = "plantogo-shell-v27";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,7 +6,8 @@ const ASSETS = [
   "./smart-modes.css?v=12",
   "./plan-detail.css?v=12",
   "./group-management.css?v=22",
-  "./dashboard-refinement.css?v=26",
+  "./dashboard-refinement.css?v=27",
+  "./groups-page.css?v=27",
   "./event-wizard.css?v=14",
   "./recurrence-pages.css?v=14",
   "./config.js?v=12",
@@ -22,7 +23,8 @@ const ASSETS = [
   "./event-sharing.js?v=24",
   "./group-invitations.js?v=24",
   "./fixed-date-submit-fix.js?v=25",
-  "./dashboard-refinement.js?v=26",
+  "./dashboard-refinement.js?v=27",
+  "./groups-page.js?v=27",
   "./event-wizard-layout-fix.js?v=13",
   "./manifest.json?v=25"
 ];
