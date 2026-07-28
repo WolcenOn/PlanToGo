@@ -39,7 +39,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           handlers.NewRouterV8(db, cfg.AllowedOrigins),
+		Handler:           handlers.NewRouterV10(db, cfg.AllowedOrigins),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      30 * time.Second,
