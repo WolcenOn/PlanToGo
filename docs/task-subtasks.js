@@ -27,6 +27,7 @@
         <form class="add-subtask-form" data-task-id="${task.id}">
           <input name="title" maxlength="200" required placeholder="Añadir elemento a la lista">
           <button type="submit" class="secondary-button">Añadir</button>
+          <small class="subtask-form-status" role="status"></small>
         </form>
       </div>`;
   }
@@ -62,22 +63,57 @@
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ actor_email: state.profile.email, completed: checkbox.checked })
       });
-      await loadSubtasks(); renderDetailTasks();
-    } catch (error) { setDetailStatus(error.message, true); }
+      await loadSubtasks();
+      renderDetailTasks();
+    } catch (error) {
+      checkbox.checked = !checkbox.checked;
+      setDetailStatus(error.message, true);
+    }
   });
 
   detailTasks.addEventListener("submit", async event => {
     const form = event.target.closest(".add-subtask-form");
     if (!form) return;
     event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const input = form.elements.title;
+    const button = form.querySelector('button[type="submit"]');
+    const status = form.querySelector(".subtask-form-status");
+    const title = String(input?.value || "").trim();
+    if (!title) {
+      status.textContent = "Escribe un elemento para la lista.";
+      status.classList.add("error");
+      input?.focus();
+      return;
+    }
+
+    status.textContent = "Añadiendo…";
+    status.classList.remove("error");
+    if (button) button.disabled = true;
+
     try {
-      await fetchJSON(`${API_BASE_URL}/api/v1/plans/${currentDetail.id}/tasks/${form.dataset.taskId}/subtasks`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ actor_email: state.profile.email, title: form.elements.title.value })
+      const response = await fetch(`${API_BASE_URL}/api/v1/plans/${encodeURIComponent(currentDetail.id)}/tasks/${encodeURIComponent(form.dataset.taskId)}/subtasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actor_email: state.profile.email, title })
       });
-      await loadSubtasks(); renderDetailTasks();
-    } catch (error) { setDetailStatus(error.message, true); }
-  });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (response.status === 404) throw new Error("La API de subtareas todavía no está desplegada en Railway o la tarea ya no existe.");
+        throw new Error(body.error || `No se pudo añadir la subtarea (error ${response.status}).`);
+      }
+      input.value = "";
+      await loadSubtasks();
+      renderDetailTasks();
+    } catch (error) {
+      status.textContent = error.message;
+      status.classList.add("error");
+      setDetailStatus(error.message, true);
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }, true);
 
   detailTasks.addEventListener("click", async event => {
     const button = event.target.closest("[data-delete-subtask]");
@@ -86,7 +122,8 @@
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/plans/${currentDetail.id}/tasks/${taskID}/subtasks/${button.dataset.deleteSubtask}?email=${encodeURIComponent(state.profile.email)}`, { method: "DELETE" });
       if (!response.ok) throw new Error("No se pudo eliminar la subtarea.");
-      await loadSubtasks(); renderDetailTasks();
+      await loadSubtasks();
+      renderDetailTasks();
     } catch (error) { setDetailStatus(error.message, true); }
   });
 })();
