@@ -36,8 +36,29 @@
   syncDateValidation();
 })();
 
-const dashboardRefinementStyles = document.createElement("link");
-dashboardRefinementStyles.rel = "stylesheet";
-dashboardRefinementStyles.href = "./dashboard-refinement.css?v=26";
-document.head.append(dashboardRefinementStyles);
-import("./dashboard-refinement.js?v=26").catch(error => console.error("No se pudieron cargar las mejoras del dashboard", error));
+(() => {
+  function addStyle(href) {
+    if (document.querySelector(`link[href="${href}"]`)) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    document.head.append(link);
+  }
+
+  function loadClassic(src) {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+      const script = document.createElement("script");
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.body.append(script);
+    });
+  }
+
+  addStyle("./dashboard-refinement.css?v=27");
+  addStyle("./groups-page.css?v=27");
+  loadClassic("./dashboard-refinement.js?v=27")
+    .then(() => loadClassic("./groups-page.js?v=27"))
+    .catch(error => console.error("No se pudieron cargar las mejoras del dashboard", error));
+})();
