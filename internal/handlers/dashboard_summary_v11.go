@@ -9,21 +9,21 @@ import (
 )
 
 type dashboardPlanV11 struct {
-	ID                  string     `json:"id"`
-	Title               string     `json:"title"`
-	Description         string     `json:"description"`
-	Type                string     `json:"type"`
-	Status              string     `json:"status"`
-	ConfirmedDate       *time.Time `json:"confirmed_date"`
-	LocationName        *string    `json:"location_name"`
-	GroupID             *string    `json:"group_id"`
-	GroupName           *string    `json:"group_name"`
-	Ownership           string     `json:"ownership"`
-	Participants        []string   `json:"participants"`
-	DateOptionCount     int        `json:"date_option_count"`
-	PendingTaskCount    int        `json:"pending_task_count"`
-	MyPendingTaskCount  int        `json:"my_pending_task_count"`
-	OpenPendingTaskCount int       `json:"open_pending_task_count"`
+	ID                   string     `json:"id"`
+	Title                string     `json:"title"`
+	Description          string     `json:"description"`
+	Type                 string     `json:"type"`
+	Status               string     `json:"status"`
+	ConfirmedDate        *time.Time `json:"confirmed_date"`
+	LocationName         *string    `json:"location_name"`
+	GroupID              *string    `json:"group_id"`
+	GroupName            *string    `json:"group_name"`
+	Ownership            string     `json:"ownership"`
+	Participants         []string   `json:"participants"`
+	DateOptionCount      int        `json:"date_option_count"`
+	PendingTaskCount     int        `json:"pending_task_count"`
+	MyPendingTaskCount   int        `json:"my_pending_task_count"`
+	OpenPendingTaskCount int        `json:"open_pending_task_count"`
 }
 
 func NewRouterV11(db *pgxpool.Pool, origins []string) http.Handler {
