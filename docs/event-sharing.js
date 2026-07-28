@@ -99,5 +99,3 @@
 
   if (state.plans?.length) renderPlans();
 })();
-
-import("./group-invitations.js?v=23").catch(error => console.error("No se pudo cargar invitaciones de grupo", error));
