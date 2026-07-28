@@ -1,4 +1,4 @@
-const CACHE = "plantogo-shell-v31";
+const CACHE = "plantogo-shell-v32";
 const ASSETS = [
   "./", "./index.html", "./styles.css?v=12", "./smart-modes.css?v=12",
   "./plan-detail.css?v=12", "./group-management.css?v=31",
@@ -13,7 +13,8 @@ const ASSETS = [
   "./fixed-date-submit-fix.js?v=25", "./dashboard-refinement.js?v=30",
   "./groups-page.js?v=30", "./calendar-day-page.js?v=30",
   "./task-subtasks.js?v=30", "./event-wizard-layout-fix.js?v=13",
-  "./pwa-install.js?v=31", "./manifest.json?v=31", "./icons/plantogo-icon.svg"
+  "./pwa-install.js?v=31", "./mobile-notifications.js?v=32",
+  "./manifest.json?v=32", "./icons/plantogo-icon.svg"
 ];
 
 self.addEventListener("install", event => {
@@ -30,4 +31,17 @@ self.addEventListener("fetch", event => {
     caches.open(CACHE).then(cache => cache.put(event.request, copy));
     return response;
   }).catch(() => caches.match(event.request)));
+});
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || "./", self.location.href).href;
+  event.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(windows => {
+    const existing = windows.find(client => new URL(client.url).origin === new URL(target).origin);
+    if (existing) {
+      existing.navigate(target);
+      return existing.focus();
+    }
+    return clients.openWindow(target);
+  }));
 });
