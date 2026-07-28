@@ -13,6 +13,7 @@ import (
 	"time"
 	_ "time/tzdata"
 
+	"github.com/WolcenOn/PlanToGo/internal/auth"
 	"github.com/WolcenOn/PlanToGo/internal/config"
 	"github.com/WolcenOn/PlanToGo/internal/database"
 	"github.com/WolcenOn/PlanToGo/internal/handlers"
@@ -57,10 +58,14 @@ func main() {
 		logger.Error("run migrations", "error", err)
 		os.Exit(1)
 	}
+
 	api := handlers.NewRouterV12(db, cfg.AllowedOrigins)
+	authStore := auth.NewStore(db)
+	apiWithOptionalSession := auth.OptionalSession(authStore, api)
+
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           appHandler(api),
+		Handler:           appHandler(apiWithOptionalSession),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      30 * time.Second,
