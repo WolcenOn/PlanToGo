@@ -45,13 +45,13 @@
       document.body.append(script);
     });
   }
-  addStyle("./dashboard-refinement.css?v=29");
-  addStyle("./groups-page.css?v=29");
-  addStyle("./calendar-day-page.css?v=29");
-  addStyle("./task-subtasks.css?v=29");
-  loadClassic("./dashboard-refinement.js?v=29")
-    .then(() => loadClassic("./groups-page.js?v=29"))
-    .then(() => loadClassic("./calendar-day-page.js?v=29"))
-    .then(() => loadClassic("./task-subtasks.js?v=29"))
+  addStyle("./dashboard-refinement.css?v=30");
+  addStyle("./groups-page.css?v=30");
+  addStyle("./calendar-day-page.css?v=30");
+  addStyle("./task-subtasks.css?v=30");
+  loadClassic("./dashboard-refinement.js?v=30")
+    .then(() => loadClassic("./groups-page.js?v=30"))
+    .then(() => loadClassic("./calendar-day-page.js?v=30"))
+    .then(() => loadClassic("./task-subtasks.js?v=30"))
     .catch(error => console.error("No se pudieron cargar las mejoras", error));
 })();
