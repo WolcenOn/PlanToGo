@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"net/mail"
 	"net/smtp"
 	"strings"
 )
@@ -32,10 +33,14 @@ func (s *SMTPSender) SendMagicLink(ctx context.Context, user User, link string) 
 	default:
 	}
 
+	from, err := mail.ParseAddress(s.options.From)
+	if err != nil {
+		return fmt.Errorf("invalid SMTP_FROM: %w", err)
+	}
 	address := net.JoinHostPort(s.options.Host, s.options.Port)
-	var auth smtp.Auth
+	var smtpAuth smtp.Auth
 	if s.options.Username != "" {
-		auth = smtp.PlainAuth("", s.options.Username, s.options.Password, s.options.Host)
+		smtpAuth = smtp.PlainAuth("", s.options.Username, s.options.Password, s.options.Host)
 	}
 
 	subject := "Tu enlace de acceso a PlanToGo"
@@ -50,7 +55,7 @@ func (s *SMTPSender) SendMagicLink(ctx context.Context, user User, link string) 
 		body,
 	}, "\r\n")
 
-	if err := smtp.SendMail(address, auth, s.options.From, []string{user.Email}, []byte(message)); err != nil {
+	if err := smtp.SendMail(address, smtpAuth, from.Address, []string{user.Email}, []byte(message)); err != nil {
 		return fmt.Errorf("send magic link email: %w", err)
 	}
 	return nil
