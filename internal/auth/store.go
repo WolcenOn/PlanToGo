@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -31,6 +32,32 @@ func NewStore(db *pgxpool.Pool) *Store {
 func tokenHashBytes(token string) []byte {
 	hash := HashToken(token)
 	return hash[:]
+}
+
+func (s *Store) FindUserByEmail(ctx context.Context, email string) (User, error) {
+	var user User
+	err := s.db.QueryRow(ctx, `
+		SELECT id, name, email
+		FROM users
+		WHERE lower(email) = $1
+	`, strings.ToLower(strings.TrimSpace(email))).Scan(&user.ID, &user.Name, &user.Email)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return User{}, ErrUnknownUser
+	}
+	return user, err
+}
+
+func (s *Store) FindUserByID(ctx context.Context, userID string) (User, error) {
+	var user User
+	err := s.db.QueryRow(ctx, `
+		SELECT id, name, email
+		FROM users
+		WHERE id = $1
+	`, userID).Scan(&user.ID, &user.Name, &user.Email)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return User{}, ErrUnknownUser
+	}
+	return user, err
 }
 
 func (s *Store) CreateLoginToken(ctx context.Context, userID, token string, expiresAt time.Time) error {
