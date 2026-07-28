@@ -4,7 +4,7 @@
   const builder = document.querySelector("#flexible-dates-field");
   const rows = document.querySelector("#date-option-inputs");
   const addButton = document.querySelector("#add-date-option");
-  if (!form || !planType || !builder || !rows) return;
+  if (!form || !planType || !builder || !rows || !addButton) return;
 
   const modePanel = document.createElement("section");
   modePanel.className = "schedule-mode-panel";
@@ -16,18 +16,7 @@
       <label><input type="radio" name="schedule_mode" value="trip"><span>Viaje</span><small>Comienzo y final</small></label>
       <label><input type="radio" name="schedule_mode" value="recurring"><span>Actividad recurrente</span><small>Días semanales y horario</small></label>
     </div>
-    <div id="recurring-builder" class="recurring-builder" hidden>
-      <div class="recurring-range">
-        <label>Desde<input id="recurring-from" type="date"></label>
-        <label>Hasta<input id="recurring-to" type="date"></label>
-        <label>Empieza<input id="recurring-start" type="time" value="17:00"></label>
-        <label>Termina<input id="recurring-end" type="time" value="18:00"></label>
-      </div>
-      <fieldset><legend>Días de la semana</legend><div class="weekday-grid">
-        ${["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"].map((day, index) => `<label><input type="checkbox" value="${index + 1}"><span>${day.slice(0, 3)}</span></label>`).join("")}
-      </div></fieldset>
-      <small>Se generará una opción por cada día seleccionado dentro del periodo.</small>
-    </div>`;
+    <div id="recurring-builder" class="recurring-builder" hidden></div>`;
   builder.insertBefore(modePanel, builder.querySelector(".builder-heading"));
 
   const currentMode = () => form.querySelector('input[name="schedule_mode"]:checked')?.value || "meetup";
@@ -57,7 +46,22 @@
   function rebuildOptions() {
     const mode = currentMode();
     const recurring = mode === "recurring";
-    document.querySelector("#recurring-builder").hidden = !recurring;
+    const recurringBuilder = document.querySelector("#recurring-builder");
+    const fixedDateField = document.querySelector("#fixed-date-field");
+    const typeField = planType.closest("label");
+
+    if (recurring && fixedDateField?.contains(document.activeElement)) {
+      form.querySelector('input[name="schedule_mode"][value="recurring"]')?.focus({ preventScroll: true });
+    }
+
+    form.classList.toggle("is-recurring", recurring);
+    if (recurringBuilder) recurringBuilder.hidden = !recurring;
+    if (fixedDateField) {
+      fixedDateField.hidden = recurring || planType.value !== "fixed";
+      fixedDateField.querySelector("input")?.toggleAttribute("disabled", recurring);
+    }
+    if (typeField) typeField.hidden = recurring;
+
     rows.hidden = recurring;
     addButton.hidden = recurring;
     rows.innerHTML = "";
@@ -68,11 +72,20 @@
 
   function generateRecurringRows() {
     if (currentMode() !== "recurring") return true;
-    const from = document.querySelector("#recurring-from").value;
-    const to = document.querySelector("#recurring-to").value;
-    const startTime = document.querySelector("#recurring-start").value;
-    const endTime = document.querySelector("#recurring-end").value;
-    const weekdays = [...document.querySelectorAll("#recurring-builder .weekday-grid input:checked")].map(input => Number(input.value));
+    if (window.PlanRecurrence || document.querySelector("#recurring-builder[data-enhanced='true']")) return true;
+
+    const fromInput = document.querySelector("#recurring-from");
+    const toInput = document.querySelector("#recurring-to");
+    const startInput = document.querySelector("#recurring-start");
+    const endInput = document.querySelector("#recurring-end");
+    const weekdayInputs = document.querySelectorAll("#recurring-builder .weekday-grid input:checked");
+    if (!fromInput || !toInput || !startInput || !endInput) return true;
+
+    const from = fromInput.value;
+    const to = toInput.value;
+    const startTime = startInput.value;
+    const endTime = endInput.value;
+    const weekdays = [...weekdayInputs].map(input => Number(input.value));
     if (!from || !to || !startTime || !endTime || !weekdays.length) return false;
     rows.innerHTML = "";
     const cursor = new Date(`${from}T00:00`);
@@ -118,8 +131,7 @@
 
   const profile = (() => { try { return JSON.parse(localStorage.getItem("plantogo.profile")); } catch { return null; } })();
   if (profile?.email) {
-    const welcome = document.querySelector("#welcome-panel");
-    welcome?.remove();
+    document.querySelector("#welcome-panel")?.remove();
     document.querySelector("#dashboard-content")?.removeAttribute("hidden");
     const profileButton = document.querySelector("#profile-button");
     if (profileButton) profileButton.title = "Cambiar o cerrar el perfil guardado en este dispositivo";

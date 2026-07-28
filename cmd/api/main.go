@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/WolcenOn/PlanToGo/internal/config"
 	"github.com/WolcenOn/PlanToGo/internal/database"
