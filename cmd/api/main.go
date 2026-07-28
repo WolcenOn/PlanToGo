@@ -39,6 +39,30 @@ func appHandler(api http.Handler) http.Handler {
 	})
 }
 
+func buildAPI(cfg config.Config, dbHandler http.Handler, authStore *auth.Store, logger *slog.Logger) http.Handler {
+	mux := http.NewServeMux()
+	if cfg.Auth.Enabled {
+		var sender auth.LinkSender
+		if cfg.Auth.DevLogLinks {
+			sender = auth.NewLogSender(logger)
+		} else {
+			sender = auth.NewSMTPSender(auth.SMTPOptions{
+				Host:     cfg.Auth.SMTPHost,
+				Port:     cfg.Auth.SMTPPort,
+				Username: cfg.Auth.SMTPUsername,
+				Password: cfg.Auth.SMTPPassword,
+				From:     cfg.Auth.SMTPFrom,
+			})
+		}
+		service := auth.NewService(authStore, sender, auth.ServiceOptions{BaseURL: cfg.Auth.PublicURL})
+		handler := auth.NewHTTPHandler(service, auth.HTTPOptions{Cookie: auth.CookieOptions{Secure: cfg.Auth.CookieSecure}})
+		mux.Handle("/api/v1/auth/", handler.Routes())
+		logger.Info("optional authentication routes enabled", "delivery", map[bool]string{true: "development-log", false: "smtp"}[cfg.Auth.DevLogLinks])
+	}
+	mux.Handle("/", dbHandler)
+	return auth.OptionalSession(authStore, mux)
+}
+
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -61,7 +85,7 @@ func main() {
 
 	api := handlers.NewRouterV12(db, cfg.AllowedOrigins)
 	authStore := auth.NewStore(db)
-	apiWithOptionalSession := auth.OptionalSession(authStore, api)
+	apiWithOptionalSession := buildAPI(cfg, api, authStore, logger)
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
