@@ -56,9 +56,11 @@
     });
   }
 
-  addStyle("./dashboard-refinement.css?v=27");
-  addStyle("./groups-page.css?v=27");
-  loadClassic("./dashboard-refinement.js?v=27")
-    .then(() => loadClassic("./groups-page.js?v=27"))
+  addStyle("./dashboard-refinement.css?v=28");
+  addStyle("./groups-page.css?v=28");
+  addStyle("./calendar-day-page.css?v=28");
+  loadClassic("./dashboard-refinement.js?v=28")
+    .then(() => loadClassic("./groups-page.js?v=28"))
+    .then(() => loadClassic("./calendar-day-page.js?v=28"))
     .catch(error => console.error("No se pudieron cargar las mejoras del dashboard", error));
 })();
