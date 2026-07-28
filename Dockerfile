@@ -13,6 +13,7 @@ RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
 COPY --from=builder /plantogo /usr/local/bin/plantogo
 COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/docs ./docs
 USER app
 EXPOSE 8080
 CMD ["plantogo"]
