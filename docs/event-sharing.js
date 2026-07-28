@@ -25,10 +25,6 @@
 
   document.querySelector("#new-plan-button")?.addEventListener("click", () => queueMicrotask(resetSingleEventMode));
 
-  async function copyLink(url) {
-    await navigator.clipboard.writeText(url);
-  }
-
   async function sharePlan({ title, url }) {
     if (navigator.share) {
       try {
@@ -38,8 +34,17 @@
         if (error?.name === "AbortError") return "cancelled";
       }
     }
-    await copyLink(url);
+    await navigator.clipboard.writeText(url);
     return "copied";
+  }
+
+  async function generatePlanLink(plan) {
+    const body = await fetchJSON(`${API_BASE_URL}/api/v1/plans/${encodeURIComponent(plan.id)}/share-token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ actor_email: state.profile.email })
+    });
+    return publicURL(body.public_token);
   }
 
   let lastSharedURL = "";
@@ -63,21 +68,29 @@
     originalRenderPlans();
     document.querySelectorAll("#plans-list .plan-card").forEach((card, index) => {
       const plan = filteredPlans()[index];
-      if (!plan?.public_token || card.querySelector(".plan-share-tools")) return;
-      const link = publicURL(plan.public_token);
+      if (!plan || plan.ownership !== "own" || card.querySelector(".plan-share-tools")) return;
       const sharing = document.createElement("div");
       sharing.className = "plan-share-tools";
-      sharing.innerHTML = `<label>Enlace para compartir<input type="text" readonly value="${escapeText(link)}" aria-label="Enlace público de ${escapeText(plan.title)}"></label><button type="button" class="secondary-button" data-share-plan>Compartir</button>`;
-      sharing.querySelector("input").addEventListener("click", event => event.target.select());
-      sharing.querySelector("[data-share-plan]").addEventListener("click", async event => {
+      sharing.innerHTML = `<label>Enlace para compartir<input type="text" readonly placeholder="Pulsa Generar enlace" aria-label="Enlace público de ${escapeText(plan.title)}"></label><button type="button" class="secondary-button" data-share-plan>Generar enlace</button>`;
+      const input = sharing.querySelector("input");
+      const button = sharing.querySelector("[data-share-plan]");
+      input.addEventListener("click", event => event.target.select());
+      button.addEventListener("click", async event => {
         event.stopPropagation();
-        const button = event.currentTarget;
+        button.disabled = true;
         try {
-          const result = await sharePlan({ title: plan.title, url: link });
+          if (!input.value) {
+            button.textContent = "Generando…";
+            input.value = await generatePlanLink(plan);
+          }
+          button.textContent = "Compartir";
+          const result = await sharePlan({ title: plan.title, url: input.value });
           button.textContent = result === "copied" ? "Copiado" : result === "shared" ? "Compartido" : "Compartir";
           setTimeout(() => { button.textContent = "Compartir"; }, 1800);
-        } catch {
-          button.textContent = "No se pudo compartir";
+        } catch (error) {
+          button.textContent = error.message || "No se pudo compartir";
+        } finally {
+          button.disabled = false;
         }
       });
       card.append(sharing);
@@ -86,3 +99,5 @@
 
   if (state.plans?.length) renderPlans();
 })();
+
+import("./group-invitations.js?v=23").catch(error => console.error("No se pudo cargar invitaciones de grupo", error));
