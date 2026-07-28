@@ -10,29 +10,20 @@
     const flexible = planType.value === "flexible";
     fixedDate.disabled = flexible;
     fixedDate.required = !flexible;
-
     flexibleBuilder.querySelectorAll("input, select, textarea").forEach(input => {
       input.disabled = !flexible;
-      if (input.classList.contains("option-start") || input.classList.contains("option-end")) {
-        input.required = flexible && input.type !== "hidden";
-      }
+      if (input.classList.contains("option-start") || input.classList.contains("option-end")) input.required = flexible && input.type !== "hidden";
     });
   }
 
   planType.addEventListener("change", () => queueMicrotask(syncDateValidation));
-  form.querySelectorAll('input[name="schedule_mode"]').forEach(input => {
-    input.addEventListener("change", () => queueMicrotask(syncDateValidation));
-  });
-
+  form.querySelectorAll('input[name="schedule_mode"]').forEach(input => input.addEventListener("change", () => queueMicrotask(syncDateValidation)));
   form.addEventListener("invalid", event => {
     const field = event.target;
     if (!(field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement)) return;
-    status.textContent = field === fixedDate
-      ? "Selecciona la fecha y hora del evento."
-      : "Revisa los campos obligatorios antes de crear el evento.";
+    status.textContent = field === fixedDate ? "Selecciona la fecha y hora del evento." : "Revisa los campos obligatorios antes de crear el evento.";
     status.classList.add("error");
   }, true);
-
   syncDateValidation();
 })();
 
@@ -44,7 +35,6 @@
     link.href = href;
     document.head.append(link);
   }
-
   function loadClassic(src) {
     return new Promise((resolve, reject) => {
       if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
@@ -55,12 +45,13 @@
       document.body.append(script);
     });
   }
-
-  addStyle("./dashboard-refinement.css?v=28");
-  addStyle("./groups-page.css?v=28");
-  addStyle("./calendar-day-page.css?v=28");
-  loadClassic("./dashboard-refinement.js?v=28")
-    .then(() => loadClassic("./groups-page.js?v=28"))
-    .then(() => loadClassic("./calendar-day-page.js?v=28"))
-    .catch(error => console.error("No se pudieron cargar las mejoras del dashboard", error));
+  addStyle("./dashboard-refinement.css?v=29");
+  addStyle("./groups-page.css?v=29");
+  addStyle("./calendar-day-page.css?v=29");
+  addStyle("./task-subtasks.css?v=29");
+  loadClassic("./dashboard-refinement.js?v=29")
+    .then(() => loadClassic("./groups-page.js?v=29"))
+    .then(() => loadClassic("./calendar-day-page.js?v=29"))
+    .then(() => loadClassic("./task-subtasks.js?v=29"))
+    .catch(error => console.error("No se pudieron cargar las mejoras", error));
 })();
