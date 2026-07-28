@@ -12,6 +12,52 @@ function renderPlanGroupOptions() {
     : '<p class="participant-empty">No perteneces a ningún grupo.</p>';
 }
 
+function ensureGroupInvitePanel() {
+  let panel = document.querySelector("#group-invite-panel");
+  if (panel) return panel;
+  panel = document.createElement("section");
+  panel.id = "group-invite-panel";
+  panel.className = "group-invite-panel";
+  panel.innerHTML = `
+    <div class="section-heading"><div><p class="eyebrow">Miembros</p><h3>Invitar personas</h3></div></div>
+    <p>Como administrador puedes añadir directamente a una persona mediante su nombre y email.</p>
+    <form id="group-member-form" class="group-member-form">
+      <label>Nombre<input name="member_name" required maxlength="100" placeholder="Nombre de la persona"></label>
+      <label>Email<input name="member_email" type="email" required placeholder="persona@email.com"></label>
+      <button class="primary-button" type="submit">Añadir al grupo</button>
+    </form>
+    <div class="group-share-row">
+      <button id="share-group" class="secondary-button" type="button">Compartir grupo</button>
+      <small id="group-invite-status" role="status"></small>
+    </div>`;
+  document.querySelector("#group-admin-actions")?.before(panel);
+  return panel;
+}
+
+async function shareCurrentGroup() {
+  if (!currentGroup) return;
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.hash = "groups-section";
+  const payload = {
+    title: `Grupo ${currentGroup.name} en PlanToGo`,
+    text: `Te he añadido al grupo “${currentGroup.name}” en PlanToGo. Entra con tu email para ver sus planes.`,
+    url: url.toString()
+  };
+  const status = document.querySelector("#group-invite-status");
+  try {
+    if (navigator.share) {
+      await navigator.share(payload);
+      if (status) status.textContent = "Grupo compartido.";
+    } else {
+      await navigator.clipboard.writeText(`${payload.text} ${payload.url}`);
+      if (status) status.textContent = "Mensaje copiado al portapapeles.";
+    }
+  } catch (error) {
+    if (error?.name !== "AbortError" && status) status.textContent = "No se pudo compartir.";
+  }
+}
+
 document.querySelector("#new-plan-button")?.addEventListener("click", renderPlanGroupOptions);
 
 const originalRenderGroupsForManagement = renderGroups;
@@ -41,6 +87,10 @@ async function openGroupDetail(groupID) {
     document.querySelector("#group-admin-actions").hidden = !currentGroup.is_admin;
     groupDetailForm.elements.name.disabled = !currentGroup.is_admin;
     groupDetailForm.elements.description.disabled = !currentGroup.is_admin;
+    const invitePanel = ensureGroupInvitePanel();
+    invitePanel.hidden = !currentGroup.is_admin;
+    invitePanel.querySelector("#group-member-form")?.reset();
+    invitePanel.querySelector("#group-invite-status").textContent = "";
     groupDetailStatus.textContent = "";
   } catch (error) {
     groupDetailStatus.textContent = error.message;
@@ -57,6 +107,34 @@ document.querySelector("#groups-list")?.addEventListener("keydown", event => {
   if (card && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); openGroupDetail(card.dataset.groupId); }
 });
 document.querySelector("#close-group-detail")?.addEventListener("click", () => groupDetailDialog.close ? groupDetailDialog.close() : groupDetailDialog.removeAttribute("open"));
+
+groupDetailDialog?.addEventListener("submit", async event => {
+  if (event.target.id !== "group-member-form") return;
+  event.preventDefault();
+  if (!currentGroup?.is_admin) return;
+  const data = Object.fromEntries(new FormData(event.target));
+  data.actor_email = state.profile.email;
+  const inviteStatus = document.querySelector("#group-invite-status");
+  try {
+    inviteStatus.textContent = "Añadiendo persona…";
+    const result = await fetchJSON(`${API_BASE_URL}/api/v1/groups/${currentGroup.id}/members`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    inviteStatus.textContent = result.already_member ? "Esa persona ya pertenecía al grupo." : "Persona añadida al grupo.";
+    event.target.reset();
+    await loadDashboard();
+    await openGroupDetail(currentGroup.id);
+    document.querySelector("#group-invite-status").textContent = result.already_member ? "Esa persona ya pertenecía al grupo." : "Persona añadida al grupo.";
+  } catch (error) {
+    inviteStatus.textContent = error.message;
+  }
+});
+
+groupDetailDialog?.addEventListener("click", event => {
+  if (event.target.closest("#share-group")) shareCurrentGroup();
+});
 
 groupDetailForm?.addEventListener("submit", async event => {
   event.preventDefault();
