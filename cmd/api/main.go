@@ -25,19 +25,15 @@ func appHandler(api http.Handler) http.Handler {
 			api.ServeHTTP(w, r)
 			return
 		}
-
 		if r.URL.Path == "/" {
 			http.ServeFile(w, r, "docs/index.html")
 			return
 		}
-
 		assetPath := filepath.Join("docs", filepath.Clean(r.URL.Path))
 		if info, err := os.Stat(assetPath); err == nil && !info.IsDir() {
 			static.ServeHTTP(w, r)
 			return
 		}
-
-		// Permite abrir enlaces públicos de planes y grupos directamente.
 		http.ServeFile(w, r, "docs/index.html")
 	})
 }
@@ -46,7 +42,6 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-
 	cfg, err := config.Load()
 	if err != nil {
 		logger.Error("load configuration", "error", err)
@@ -62,8 +57,7 @@ func main() {
 		logger.Error("run migrations", "error", err)
 		os.Exit(1)
 	}
-
-	api := handlers.NewRouterV11(db, cfg.AllowedOrigins)
+	api := handlers.NewRouterV12(db, cfg.AllowedOrigins)
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
 		Handler:           appHandler(api),
@@ -79,7 +73,6 @@ func main() {
 			os.Exit(1)
 		}
 	}()
-
 	<-ctx.Done()
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
