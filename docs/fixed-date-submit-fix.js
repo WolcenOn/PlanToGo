@@ -35,3 +35,9 @@
 
   syncDateValidation();
 })();
+
+const dashboardRefinementStyles = document.createElement("link");
+dashboardRefinementStyles.rel = "stylesheet";
+dashboardRefinementStyles.href = "./dashboard-refinement.css?v=26";
+document.head.append(dashboardRefinementStyles);
+import("./dashboard-refinement.js?v=26").catch(error => console.error("No se pudieron cargar las mejoras del dashboard", error));
