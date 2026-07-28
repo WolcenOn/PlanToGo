@@ -28,11 +28,16 @@ func NewStore(db *pgxpool.Pool) *Store {
 	return &Store{db: db}
 }
 
+func tokenHashBytes(token string) []byte {
+	hash := HashToken(token)
+	return hash[:]
+}
+
 func (s *Store) CreateLoginToken(ctx context.Context, userID, token string, expiresAt time.Time) error {
 	_, err := s.db.Exec(ctx, `
 		INSERT INTO login_tokens (user_id, token_hash, expires_at)
 		VALUES ($1, $2, $3)
-	`, userID, HashToken(token), expiresAt)
+	`, userID, tokenHashBytes(token), expiresAt)
 	return err
 }
 
@@ -47,7 +52,7 @@ func (s *Store) ConsumeLoginToken(ctx context.Context, token string, now time.Ti
 		  AND used_at IS NULL
 		  AND expires_at > $2
 		RETURNING user_id
-	`, HashToken(token), now).Scan(&userID)
+	`, tokenHashBytes(token), now).Scan(&userID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", ErrInvalidOrExpiredToken
 	}
@@ -58,7 +63,7 @@ func (s *Store) CreateSession(ctx context.Context, userID, token string, expires
 	_, err := s.db.Exec(ctx, `
 		INSERT INTO sessions (user_id, token_hash, expires_at)
 		VALUES ($1, $2, $3)
-	`, userID, HashToken(token), expiresAt)
+	`, userID, tokenHashBytes(token), expiresAt)
 	return err
 }
 
@@ -71,7 +76,7 @@ func (s *Store) FindSession(ctx context.Context, token string, now time.Time) (S
 		  AND revoked_at IS NULL
 		  AND expires_at > $2
 		RETURNING id, user_id, expires_at, last_seen_at
-	`, HashToken(token), now).Scan(&session.ID, &session.UserID, &session.ExpiresAt, &session.LastSeenAt)
+	`, tokenHashBytes(token), now).Scan(&session.ID, &session.UserID, &session.ExpiresAt, &session.LastSeenAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Session{}, ErrInvalidOrExpiredToken
 	}
@@ -83,7 +88,7 @@ func (s *Store) RevokeSession(ctx context.Context, token string, now time.Time) 
 		UPDATE sessions
 		SET revoked_at = COALESCE(revoked_at, $2)
 		WHERE token_hash = $1
-	`, HashToken(token), now)
+	`, tokenHashBytes(token), now)
 	return err
 }
 
