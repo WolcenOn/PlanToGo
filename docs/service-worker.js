@@ -1,4 +1,4 @@
-const CACHE = "plantogo-shell-v23";
+const CACHE = "plantogo-shell-v24";
 const ASSETS = [
   "./",
   "./index.html",
@@ -18,10 +18,10 @@ const ASSETS = [
   "./recurrence-ui.js?v=21",
   "./recurrence-form-fix.js?v=18",
   "./recurrence-editor-fix.js?v=15",
-  "./event-sharing.js?v=20",
-  "./group-invitations.js?v=23",
+  "./event-sharing.js?v=24",
+  "./group-invitations.js?v=24",
   "./event-wizard-layout-fix.js?v=13",
-  "./manifest.json?v=22"
+  "./manifest.json?v=24"
 ];
 
 self.addEventListener("install", event => {
