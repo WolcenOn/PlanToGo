@@ -1,4 +1,4 @@
-const CACHE = "plantogo-shell-v22";
+const CACHE = "plantogo-shell-v23";
 const ASSETS = [
   "./",
   "./index.html",
@@ -19,6 +19,7 @@ const ASSETS = [
   "./recurrence-form-fix.js?v=18",
   "./recurrence-editor-fix.js?v=15",
   "./event-sharing.js?v=20",
+  "./group-invitations.js?v=23",
   "./event-wizard-layout-fix.js?v=13",
   "./manifest.json?v=22"
 ];
