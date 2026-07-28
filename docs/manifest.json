@@ -1,10 +1,20 @@
 {
+  "id": "./",
   "name": "PlanToGo",
   "short_name": "PlanToGo",
+  "description": "Organiza planes, fechas y tareas con tu grupo.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f3f4f6",
-  "theme_color": "#111827",
-  "description": "Organiza planes, fechas y tareas con tu grupo."
+  "theme_color": "#172554",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "./icons/plantogo-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
