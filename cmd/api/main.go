@@ -63,7 +63,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	api := handlers.NewRouterV10(db, cfg.AllowedOrigins)
+	api := handlers.NewRouterV11(db, cfg.AllowedOrigins)
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
 		Handler:           appHandler(api),
