@@ -47,15 +47,24 @@
     const startsOn = document.querySelector("#series-from")?.value;
     const endsOn = document.querySelector("#series-to")?.value;
     const rules = [...document.querySelectorAll(".recurrence-rule")]
-      .filter(row => row.querySelector('[data-weekday]').checked)
+      .filter(row => row.querySelector("[data-weekday]").checked)
       .map(row => ({
-        weekday: Number(row.querySelector('[data-weekday]').dataset.weekday),
-        start_time: row.querySelector('[data-start]').value,
-        end_time: row.querySelector('[data-end]').value
+        weekday: Number(row.querySelector("[data-weekday]").dataset.weekday),
+        start_time: row.querySelector("[data-start]").value,
+        end_time: row.querySelector("[data-end]").value
       }));
     if (!startsOn || !endsOn || !rules.length) throw new Error("Define el periodo y al menos un día semanal.");
     if (rules.some(rule => !rule.start_time || !rule.end_time || rule.end_time <= rule.start_time)) throw new Error("Cada día necesita una hora final posterior a la inicial.");
     return { starts_on: startsOn, ends_on: endsOn, timezone: "Europe/Madrid", rules };
+  }
+
+  async function loadOccurrences() {
+    if (!state.profile?.email || state.publicToken) {
+      state.occurrences = [];
+      return;
+    }
+    const body = await fetchJSON(`${API_BASE_URL}/api/v1/dashboard/occurrences?email=${encodeURIComponent(state.profile.email)}`);
+    state.occurrences = body.occurrences || [];
   }
 
   window.PlanRecurrence = {
@@ -78,18 +87,32 @@
       });
       recurrencePayload = null;
       return result;
+    },
+    getFocusDate() {
+      return recurrencePayload ? firstOccurrence(recurrencePayload) : null;
+    },
+    async refreshCalendar() {
+      try {
+        await loadOccurrences();
+      } catch (error) {
+        state.occurrences = [];
+        console.error("No se pudieron cargar las sesiones recurrentes", error);
+      }
+      renderCalendar();
     }
   };
 
   const originalLoadDashboard = loadDashboard;
   loadDashboard = async function loadDashboardWithOccurrences() {
     await originalLoadDashboard();
-    if (!state.profile?.email) return;
+    if (!state.profile?.email || state.publicToken) return;
     try {
-      const body = await fetchJSON(`${API_BASE_URL}/api/v1/dashboard/occurrences?email=${encodeURIComponent(state.profile.email)}`);
-      state.occurrences = body.occurrences || [];
-      renderCalendar();
-    } catch { state.occurrences = []; }
+      await loadOccurrences();
+    } catch (error) {
+      state.occurrences = [];
+      console.error("No se pudieron cargar las sesiones recurrentes", error);
+    }
+    renderCalendar();
   };
 
   const originalPlansForDate = plansForDate;
@@ -132,7 +155,9 @@
           <div><strong>${escapeText(formatDate(item.starts_at))}</strong><small>Hasta ${new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" }).format(new Date(item.ends_at))}</small></div>
           ${currentDetail?.is_owner ? '<div><button type="button" data-occurrence-action="edit">Editar</button><button type="button" data-occurrence-action="delete">Eliminar</button></div>' : ''}
         </article>`).join("");
-    } catch { panel.hidden = true; }
+    } catch {
+      panel.hidden = true;
+    }
   }
 
   const originalOpenPlanDetail = openPlanDetail;
@@ -162,4 +187,7 @@
   });
 
   buildRecurringEditor();
+  if (state.profile?.email && !state.publicToken) {
+    window.PlanRecurrence.refreshCalendar();
+  }
 })();

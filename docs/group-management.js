@@ -89,6 +89,7 @@ form.addEventListener("submit", async event => {
   data.tasks = window.PlanWizard?.getTasks?.() || [];
   try {
     window.PlanRecurrence?.preparePlanData(data);
+    const focusDate = window.PlanRecurrence?.getFocusDate?.() || (data.confirmed_date ? new Date(data.confirmed_date) : null);
     if (!data.confirmed_date && data.type === "fixed") throw new Error("Selecciona la fecha final del evento.");
     if (data.type === "fixed") {
       data.confirmed_date = new Date(data.confirmed_date).toISOString();
@@ -110,18 +111,20 @@ form.addEventListener("submit", async event => {
       throw recurrenceError;
     }
     saveProfile({ name: data.creator_name, email: data.creator_email });
+    if (focusDate && !Number.isNaN(focusDate.getTime())) state.calendarDate = new Date(focusDate);
     const link = publicURL(body.public_token);
     statusNode.innerHTML = `Plan creado con ${body.task_count || 0} tareas. <a href="${link}">Abrir enlace para compartir</a>`;
     await navigator.clipboard?.writeText(link).catch(() => {});
     await loadDashboard();
+    document.querySelector("#calendar-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) { setStatus(error.message === "Failed to fetch" ? "No se pudo conectar con Railway." : error.message, true); }
 }, true);
 
 const wizardStyle = document.createElement("link");
 wizardStyle.rel = "stylesheet";
-wizardStyle.href = "./event-wizard.css?v=12";
+wizardStyle.href = "./event-wizard.css?v=14";
 document.head.append(wizardStyle);
 Promise.all([
-  import("./event-wizard.js?v=12"),
-  import("./recurrence-ui.js?v=12")
+  import("./event-wizard.js?v=14"),
+  import("./recurrence-ui.js?v=14")
 ]).catch(error => console.error("No se pudo cargar el asistente", error));
