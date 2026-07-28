@@ -78,8 +78,8 @@ func (api *API) addGroupMember(w http.ResponseWriter, r *http.Request) {
 		status = http.StatusOK
 	}
 	writeJSON(w, status, map[string]any{
-		"status": "added",
-		"member_email": input.MemberEmail,
+		"status":         "added",
+		"member_email":   input.MemberEmail,
 		"already_member": result.RowsAffected() == 0,
 	})
 }
