@@ -1,1 +1,2 @@
 [hidden]{display:none!important}
+.calendar-pending-plans{margin-top:1rem;padding:1rem;border:1px solid #f59e0b;border-radius:1rem;background:#fffbeb;display:grid;gap:.45rem}.calendar-pending-plans small{color:#92400e}.calendar-pending-plans div{display:flex;gap:.5rem;flex-wrap:wrap}.calendar-pending-plans button{border:1px solid #fbbf24;border-radius:.7rem;background:#fff;padding:.55rem .75rem;color:#92400e;font-weight:700}
