@@ -57,7 +57,7 @@ func main() {
 		logger.Error("run migrations", "error", err)
 		os.Exit(1)
 	}
-	api := handlers.NewRouterV14(db, cfg.AllowedOrigins)
+	api := handlers.NewRouterV15(db, cfg.AllowedOrigins)
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
 		Handler:           appHandler(api),
