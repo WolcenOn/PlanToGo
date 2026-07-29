@@ -97,7 +97,6 @@
     await enrichDashboard();
   };
 
-  const originalPlansForDate = plansForDate;
   plansForDate = function plansForDateWithRanges(date) {
     const target = dayStart(date).getTime();
     return (state.plans || []).filter(plan => {
@@ -214,4 +213,6 @@
     const item = event.target.closest(".calendar-event[data-plan-id]");
     if (item?.dataset.planId) openPlanDetail(item.dataset.planId);
   });
+
+  queueMicrotask(() => enrichDashboard());
 })();
