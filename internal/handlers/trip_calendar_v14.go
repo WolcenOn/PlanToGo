@@ -7,24 +7,25 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type tripCalendarInterval struct {
-	ID        string `json:"id"`
-	StartTime any    `json:"start_time"`
-	EndTime   any    `json:"end_time"`
-	Yes       int    `json:"yes"`
-	Maybe     int    `json:"maybe"`
-	No        int    `json:"no"`
-	Confirmed bool   `json:"confirmed"`
+	ID        string    `json:"id"`
+	StartTime time.Time `json:"start_time"`
+	EndTime   time.Time `json:"end_time"`
+	Yes       int       `json:"yes"`
+	Maybe     int       `json:"maybe"`
+	No        int       `json:"no"`
+	Confirmed bool      `json:"confirmed"`
 }
 
 type tripCalendarPlan struct {
-	PlanID     string                 `json:"plan_id"`
-	Status     string                 `json:"status"`
-	Intervals  []tripCalendarInterval `json:"intervals"`
+	PlanID    string                 `json:"plan_id"`
+	Status    string                 `json:"status"`
+	Intervals []tripCalendarInterval `json:"intervals"`
 }
 
 // NewRouterV14 makes trip intervals a first-class calendar data source.
