@@ -1,142 +1,165 @@
 (() => {
   const form = document.querySelector("#plan-form");
   const planType = document.querySelector("#plan-type");
-  const builder = document.querySelector("#flexible-dates-field");
+  const flexibleField = document.querySelector("#flexible-dates-field");
+  const fixedField = document.querySelector("#fixed-date-field");
   const rows = document.querySelector("#date-option-inputs");
   const addButton = document.querySelector("#add-date-option");
-  if (!form || !planType || !builder || !rows || !addButton) return;
+  if (!form || !planType || !flexibleField || !fixedField || !rows || !addButton) return;
+
+  const typeField = planType.closest("label");
+  const builderHeading = flexibleField.querySelector(".builder-heading");
+  const builderTitle = builderHeading?.querySelector("strong");
+  const builderHelp = builderHeading?.querySelector("small");
 
   const modePanel = document.createElement("section");
-  modePanel.className = "schedule-mode-panel";
+  modePanel.className = "schedule-mode-panel full-width";
   modePanel.innerHTML = `
-    <div class="schedule-mode-heading"><strong>¿Qué estás organizando?</strong><small>La forma de proponer fechas se adapta al plan.</small></div>
-    <div class="schedule-mode-grid" role="radiogroup" aria-label="Tipo de horario">
-      <label><input type="radio" name="schedule_mode" value="meetup" checked><span>Quedada</span><small>Solo hora de comienzo</small></label>
-      <label><input type="radio" name="schedule_mode" value="cinema"><span>Cine</span><small>Horas de las sesiones</small></label>
-      <label><input type="radio" name="schedule_mode" value="trip"><span>Viaje</span><small>Comienzo y final</small></label>
+    <div class="schedule-mode-heading"><strong>¿Qué estás organizando?</strong><small>La forma de indicar las fechas se adapta a la actividad.</small></div>
+    <div class="schedule-mode-grid" role="radiogroup" aria-label="Tipo de actividad">
+      <label><input type="radio" name="schedule_mode" value="meetup" checked><span>Quedada</span><small>Una fecha o varias propuestas</small></label>
+      <label><input type="radio" name="schedule_mode" value="cinema"><span>Cine</span><small>Una sesión o varias propuestas</small></label>
+      <label><input type="radio" name="schedule_mode" value="trip"><span>Viaje</span><small>Intervalos completos de inicio y fin</small></label>
       <label><input type="radio" name="schedule_mode" value="recurring"><span>Actividad recurrente</span><small>Días semanales y horario</small></label>
     </div>
     <div id="recurring-builder" class="recurring-builder" hidden></div>`;
-  builder.insertBefore(modePanel, builder.querySelector(".builder-heading"));
+  typeField.before(modePanel);
 
   const currentMode = () => form.querySelector('input[name="schedule_mode"]:checked')?.value || "meetup";
-  const durationMinutes = mode => mode === "cinema" ? 180 : 120;
-  const toLocalValue = date => {
-    const copy = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return copy.toISOString().slice(0, 16);
-  };
+  const isTrip = () => currentMode() === "trip";
+  const isRecurring = () => currentMode() === "recurring";
+  const isFlexible = () => planType.value === "flexible";
+  const toLocalValue = date => new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
-  function addCompactOption(value = "") {
+  function setVisible(node, visible) {
+    if (!node) return;
+    node.hidden = !visible;
+    if (visible) node.style.removeProperty("display");
+    else node.style.setProperty("display", "none", "important");
+    node.querySelectorAll("input, select, textarea, button").forEach(control => {
+      control.disabled = !visible;
+    });
+  }
+
+  function buildOption() {
     const mode = currentMode();
     const row = document.createElement("div");
-    row.className = "date-option-input compact-option";
+    row.className = `date-option-input compact-option${mode === "trip" ? " trip-interval" : ""}`;
     if (mode === "trip") {
-      row.innerHTML = `<label>Comienza<input type="datetime-local" class="option-start" value="${value}" required></label><label>Termina<input type="datetime-local" class="option-end" required></label><button type="button" class="icon-button remove-option" aria-label="Eliminar">×</button>`;
+      row.innerHTML = '<label>Inicio del viaje<input type="datetime-local" class="option-start" required></label><label>Fin del viaje<input type="datetime-local" class="option-end" required></label><button type="button" class="icon-button remove-option" aria-label="Eliminar intervalo">×</button>';
     } else {
-      row.innerHTML = `<label>${mode === "cinema" ? "Inicio de sesión" : "Día y hora"}<input type="datetime-local" class="option-start" value="${value}" required></label><input type="hidden" class="option-end"><button type="button" class="icon-button remove-option" aria-label="Eliminar">×</button>`;
+      const label = mode === "cinema" ? "Inicio de sesión" : "Día y hora";
+      row.innerHTML = `<label>${label}<input type="datetime-local" class="option-start" required></label><input type="hidden" class="option-end"><button type="button" class="icon-button remove-option" aria-label="Eliminar propuesta">×</button>`;
       row.querySelector(".option-start").addEventListener("change", event => {
         const start = new Date(event.target.value);
-        if (!Number.isNaN(start.getTime())) row.querySelector(".option-end").value = toLocalValue(new Date(start.getTime() + durationMinutes(mode) * 60000));
+        if (!Number.isNaN(start.getTime())) row.querySelector(".option-end").value = toLocalValue(new Date(start.getTime() + (mode === "cinema" ? 180 : 120) * 60000));
       });
     }
-    row.querySelector(".remove-option").addEventListener("click", () => { if (rows.children.length > 2) row.remove(); });
+    row.querySelector(".remove-option").addEventListener("click", () => {
+      const minimum = isFlexible() ? 2 : 1;
+      if (rows.children.length > minimum) row.remove();
+    });
     rows.append(row);
   }
 
-  function rebuildOptions() {
-    const mode = currentMode();
-    const recurring = mode === "recurring";
+  function rebuildRows() {
+    rows.innerHTML = "";
+    const minimum = isFlexible() ? 2 : 1;
+    for (let index = 0; index < minimum; index += 1) buildOption();
+  }
+
+  function sync() {
+    const recurring = isRecurring();
+    const trip = isTrip();
+    const flexible = isFlexible();
     const recurringBuilder = document.querySelector("#recurring-builder");
-    const fixedDateField = document.querySelector("#fixed-date-field");
-    const typeField = planType.closest("label");
 
-    if (recurring && fixedDateField?.contains(document.activeElement)) {
-      form.querySelector('input[name="schedule_mode"][value="recurring"]')?.focus({ preventScroll: true });
-    }
+    setVisible(typeField, !recurring);
+    setVisible(recurringBuilder, recurring);
 
-    form.classList.toggle("is-recurring", recurring);
-    if (recurringBuilder) recurringBuilder.hidden = !recurring;
-    if (fixedDateField) {
-      fixedDateField.hidden = recurring || planType.value !== "fixed";
-      fixedDateField.querySelector("input")?.toggleAttribute("disabled", recurring);
-    }
-    if (typeField) typeField.hidden = recurring;
-
-    rows.hidden = recurring;
-    addButton.hidden = recurring;
-    rows.innerHTML = "";
-    if (!recurring) { addCompactOption(); addCompactOption(); }
-    const heading = builder.querySelector(".builder-heading strong");
-    if (heading) heading.textContent = mode === "trip" ? "Opciones de viaje" : mode === "cinema" ? "Sesiones propuestas" : mode === "recurring" ? "Programación semanal" : "Días propuestos";
-  }
-
-  function generateRecurringRows() {
-    if (currentMode() !== "recurring") return true;
-    if (window.PlanRecurrence || document.querySelector("#recurring-builder[data-enhanced='true']")) return true;
-
-    const fromInput = document.querySelector("#recurring-from");
-    const toInput = document.querySelector("#recurring-to");
-    const startInput = document.querySelector("#recurring-start");
-    const endInput = document.querySelector("#recurring-end");
-    const weekdayInputs = document.querySelectorAll("#recurring-builder .weekday-grid input:checked");
-    if (!fromInput || !toInput || !startInput || !endInput) return true;
-
-    const from = fromInput.value;
-    const to = toInput.value;
-    const startTime = startInput.value;
-    const endTime = endInput.value;
-    const weekdays = [...weekdayInputs].map(input => Number(input.value));
-    if (!from || !to || !startTime || !endTime || !weekdays.length) return false;
-    rows.innerHTML = "";
-    const cursor = new Date(`${from}T00:00`);
-    const last = new Date(`${to}T23:59`);
-    let count = 0;
-    while (cursor <= last && count < 90) {
-      const weekday = cursor.getDay() === 0 ? 7 : cursor.getDay();
-      if (weekdays.includes(weekday)) {
-        const day = toLocalValue(cursor).slice(0, 10);
-        const row = document.createElement("div");
-        row.className = "date-option-input generated-option";
-        row.innerHTML = `<input type="hidden" class="option-start" value="${day}T${startTime}"><input type="hidden" class="option-end" value="${day}T${endTime}">`;
-        rows.append(row);
-        count += 1;
-      }
-      cursor.setDate(cursor.getDate() + 1);
-    }
-    return rows.children.length >= 2;
-  }
-
-  form.querySelectorAll('input[name="schedule_mode"]').forEach(input => input.addEventListener("change", rebuildOptions));
-  planType.addEventListener("change", () => { modePanel.hidden = planType.value !== "flexible"; if (planType.value === "flexible") rebuildOptions(); });
-  addButton.addEventListener("click", event => { event.stopImmediatePropagation(); addCompactOption(); }, true);
-  form.addEventListener("submit", event => {
-    if (planType.value !== "flexible") return;
-    if (!generateRecurringRows()) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      const status = document.querySelector("#form-status");
-      status.textContent = "Completa el periodo, el horario y al menos un día semanal.";
-      status.classList.add("error");
+    if (recurring) {
+      setVisible(fixedField, false);
+      setVisible(flexibleField, false);
+      form.elements.confirmed_date.required = false;
       return;
     }
-    rows.querySelectorAll(".compact-option").forEach(row => {
-      const startInput = row.querySelector(".option-start");
-      const endInput = row.querySelector(".option-end");
-      if (startInput?.value && !endInput?.value) {
-        const start = new Date(startInput.value);
-        endInput.value = toLocalValue(new Date(start.getTime() + durationMinutes(currentMode()) * 60000));
-      }
-    });
-  }, true);
 
-  const profile = (() => { try { return JSON.parse(localStorage.getItem("plantogo.profile")); } catch { return null; } })();
-  if (profile?.email) {
-    document.querySelector("#welcome-panel")?.remove();
-    document.querySelector("#dashboard-content")?.removeAttribute("hidden");
-    const profileButton = document.querySelector("#profile-button");
-    if (profileButton) profileButton.title = "Cambiar o cerrar el perfil guardado en este dispositivo";
+    if (trip) {
+      setVisible(fixedField, false);
+      setVisible(flexibleField, true);
+      setVisible(rows, true);
+      setVisible(builderHeading, true);
+      setVisible(addButton, flexible);
+      addButton.textContent = "+ Añadir intervalo";
+      if (builderTitle) builderTitle.textContent = flexible ? "Intervalos de viaje para votar" : "Intervalo fijo del viaje";
+      if (builderHelp) builderHelp.textContent = flexible ? "Cada propuesta incluye inicio y fin. Añade al menos dos intervalos." : "Indica el inicio y el final del viaje.";
+      form.elements.confirmed_date.required = false;
+      rebuildRows();
+      return;
+    }
+
+    addButton.textContent = "+ Añadir propuesta";
+    setVisible(fixedField, !flexible);
+    setVisible(flexibleField, flexible);
+    setVisible(rows, flexible);
+    setVisible(builderHeading, flexible);
+    setVisible(addButton, flexible);
+    form.elements.confirmed_date.required = !flexible;
+    if (flexible) rebuildRows();
   }
 
-  modePanel.hidden = planType.value !== "flexible";
-  rebuildOptions();
+  form.querySelectorAll('input[name="schedule_mode"]').forEach(input => input.addEventListener("change", sync));
+  planType.addEventListener("change", sync);
+  addButton.addEventListener("click", event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    buildOption();
+  }, true);
+
+  form.addEventListener("submit", async event => {
+    if (!isTrip()) return;
+    const intervals = [...rows.querySelectorAll(".trip-interval")];
+    const invalid = intervals.some(row => {
+      const start = row.querySelector(".option-start")?.value;
+      const end = row.querySelector(".option-end")?.value;
+      return !start || !end || new Date(end) <= new Date(start);
+    });
+    const minimum = isFlexible() ? 2 : 1;
+    if (intervals.length < minimum || invalid) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      setStatus(`Añade al menos ${minimum === 1 ? "un intervalo completo" : "dos intervalos completos"} y comprueba sus fechas.`, true);
+      return;
+    }
+
+    if (isFlexible()) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const interval = intervals[0];
+    const data = Object.fromEntries(new FormData(form));
+    data.type = "flexible";
+    data.confirmed_date = "";
+    data.date_options = [{
+      start_time: new Date(interval.querySelector(".option-start").value).toISOString(),
+      end_time: new Date(interval.querySelector(".option-end").value).toISOString()
+    }];
+    setStatus("Creando viaje…");
+    try {
+      const body = await fetchJSON(`${API_BASE_URL}/api/v1/plans`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      saveProfile({ name: data.creator_name, email: data.creator_email });
+      const link = publicURL(body.public_token);
+      statusNode.innerHTML = `Viaje creado. <a href="${link}">Abrir enlace para compartir</a>`;
+      await navigator.clipboard?.writeText(link).catch(() => {});
+      await loadDashboard();
+    } catch (error) {
+      setStatus(error.message === "Failed to fetch" ? "No se pudo conectar con Railway." : error.message, true);
+    }
+  }, true);
+
+  sync();
 })();
