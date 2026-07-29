@@ -41,13 +41,13 @@ function loadCalendarInsights() {
   if (!document.querySelector('link[data-calendar-insights]')) {
     const style = document.createElement("link");
     style.rel = "stylesheet";
-    style.href = "./calendar-insights.css?v=39";
+    style.href = "./calendar-insights.css?v=44";
     style.dataset.calendarInsights = "true";
     document.head.append(style);
   }
   if (!document.querySelector('script[data-calendar-insights]')) {
     const script = document.createElement("script");
-    script.src = "./calendar-insights.js?v=39";
+    script.src = "./calendar-insights.js?v=44";
     script.dataset.calendarInsights = "true";
     document.body.append(script);
   }
