@@ -10,13 +10,28 @@
 
   const score = interval => (Number(interval?.yes) || 0) * 2 + (Number(interval?.maybe) || 0);
 
-  function selectedInterval(trip) {
+  function selectedInterval(trip, plan) {
     const intervals = Array.isArray(trip?.intervals) ? trip.intervals : [];
     if (!intervals.length) return null;
     if (trip.status === "confirmed") {
-      return intervals.find(interval => interval.confirmed) || null;
+      const explicit = intervals.find(interval => interval.confirmed);
+      if (explicit) return explicit;
+      if (plan?.confirmed_date) {
+        const confirmed = new Date(plan.confirmed_date).getTime();
+        const matched = intervals.find(interval => Math.abs(new Date(interval.start_time).getTime() - confirmed) < 60000);
+        if (matched) return matched;
+      }
+      return null;
     }
     return intervals.reduce((best, interval) => !best || score(interval) > score(best) ? interval : best, null);
+  }
+
+  function validRange(interval) {
+    if (!interval?.start_time || !interval?.end_time) return null;
+    const start = dayStart(interval.start_time).getTime();
+    const end = dayStart(interval.end_time).getTime();
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return null;
+    return { start, end };
   }
 
   async function loadTripIntervals() {
@@ -25,8 +40,10 @@
       return;
     }
     const body = await fetchJSON(`${API_BASE_URL}/api/v1/calendar/trip-intervals?email=${encodeURIComponent(state.profile.email)}`);
+    const nextTrips = new Map();
+    for (const trip of body?.plans || []) nextTrips.set(trip.plan_id, trip);
     trips.clear();
-    for (const trip of body?.plans || []) trips.set(trip.plan_id, trip);
+    nextTrips.forEach((trip, id) => trips.set(id, trip));
   }
 
   const baseLoadDashboard = loadDashboard;
@@ -37,26 +54,33 @@
       renderDashboard();
     } catch (error) {
       console.error("No se pudieron cargar los intervalos de viaje", error);
+      renderDashboard();
     }
   };
 
   const basePlansForDate = plansForDate;
   plansForDate = function plansForDateWithPersistedTrips(date) {
     const target = dayStart(date).getTime();
-    const base = basePlansForDate(date).filter(plan => !trips.has(plan.id));
-    const travelPlans = (state.plans || []).filter(plan => {
+    const originalPlans = basePlansForDate(date);
+    const replacedTripIDs = new Set();
+    const travelPlans = [];
+
+    for (const plan of state.plans || []) {
       const trip = trips.get(plan.id);
-      if (!trip) return false;
-      const interval = selectedInterval(trip);
-      if (!interval?.start_time || !interval?.end_time) return false;
-      const start = dayStart(interval.start_time).getTime();
-      const end = dayStart(interval.end_time).getTime();
-      if (target < start || target > end) return false;
+      if (!trip) continue;
+      const interval = selectedInterval(trip, plan);
+      const range = validRange(interval);
+      if (!range) continue;
+
+      replacedTripIDs.add(plan.id);
+      if (target < range.start || target > range.end) continue;
       plan._calendarPending = trip.status !== "confirmed";
-      plan._calendarSegment = start === end ? "single" : target === start ? "start" : target === end ? "end" : "middle";
+      plan._calendarSegment = range.start === range.end ? "single" : target === range.start ? "start" : target === range.end ? "end" : "middle";
       plan._calendarTripInterval = interval;
-      return true;
-    });
+      travelPlans.push(plan);
+    }
+
+    const base = originalPlans.filter(plan => !replacedTripIDs.has(plan.id));
     return [...base, ...travelPlans];
   };
 
@@ -82,7 +106,9 @@
   queueMicrotask(async () => {
     try {
       await loadTripIntervals();
-      renderDashboard();
-    } catch (_) {}
+    } catch (error) {
+      console.error("No se pudieron cargar los intervalos de viaje", error);
+    }
+    renderDashboard();
   });
 })();
