@@ -16,10 +16,17 @@
   };
   const combine = (date, time) => date ? `${date}T${time || "09:00"}` : "";
 
+  function activate(control) {
+    if (!control) return;
+    control.disabled = false;
+    control.removeAttribute("disabled");
+    control.style.pointerEvents = "auto";
+  }
+
   function createTripRow() {
     const row = document.createElement("div");
     row.className = "date-option-input compact-option trip-interval";
-    row.innerHTML = '<label>Hora de salida<input type="datetime-local" class="option-start" required></label><label>Hora de regreso<input type="datetime-local" class="option-end" required></label><button type="button" class="icon-button remove-option" aria-label="Eliminar intervalo">×</button>';
+    row.innerHTML = '<label>Inicio del viaje<input type="datetime-local" class="option-start" required></label><label>Fin del viaje<input type="datetime-local" class="option-end" required></label><button type="button" class="icon-button remove-option" aria-label="Eliminar intervalo">×</button>';
     row.querySelector(".remove-option").addEventListener("click", () => {
       const minimum = planType.value === "flexible" ? 2 : 1;
       if (rows.children.length > minimum) row.remove();
@@ -37,6 +44,14 @@
     const minimum = planType.value === "flexible" ? 2 : 1;
     while (rows.querySelectorAll(".trip-interval").length < minimum) createTripRow();
     if (planType.value === "fixed") [...rows.querySelectorAll(".trip-interval")].slice(1).forEach(row => row.remove());
+    rows.querySelectorAll("input, button").forEach(activate);
+  }
+
+  function openNativePicker(input) {
+    activate(input);
+    input.focus({ preventScroll: true });
+    if (typeof input.showPicker === "function") input.showPicker();
+    else input.click();
   }
 
   function enhanceRow(row) {
@@ -44,20 +59,23 @@
     const startInput = row.querySelector(".option-start");
     const endInput = row.querySelector(".option-end");
     if (!startInput || !endInput) return;
+    activate(startInput);
+    activate(endInput);
 
     const picker = document.createElement("div");
     picker.className = "trip-range-picker";
     picker.innerHTML = `
       <div class="trip-range-picker-heading"><strong>Selecciona el intervalo</strong><small>Elige salida y regreso como al reservar un viaje.</small></div>
       <div class="trip-range-picker-grid">
-        <label>Fecha de salida<input type="date" class="trip-range-start-date"></label>
-        <label>Fecha de regreso<input type="date" class="trip-range-end-date"></label>
+        <label>Fecha de salida<div class="trip-date-control"><input type="date" class="trip-range-start-date"><button type="button" class="secondary-button open-start-date">Abrir calendario</button></div></label>
+        <label>Fecha de regreso<div class="trip-date-control"><input type="date" class="trip-range-end-date"><button type="button" class="secondary-button open-end-date">Abrir calendario</button></div></label>
       </div>
       <div class="trip-range-summary" aria-live="polite">Selecciona salida y regreso.</div>`;
 
     const startDate = picker.querySelector(".trip-range-start-date");
     const endDate = picker.querySelector(".trip-range-end-date");
     const summary = picker.querySelector(".trip-range-summary");
+    [startDate, endDate].forEach(activate);
 
     function renderSummary() {
       if (!startDate.value || !endDate.value) {
@@ -72,12 +90,16 @@
     }
 
     function syncPickerToFields() {
+      activate(startInput);
+      activate(endInput);
       if (startDate.value) endDate.min = startDate.value;
       if (startDate.value && endDate.value && endDate.value < startDate.value) endDate.value = startDate.value;
       const startTime = parts(startInput.value).time || "09:00";
       const endTime = parts(endInput.value).time || "18:00";
       startInput.value = combine(startDate.value, startTime);
       endInput.value = combine(endDate.value, endTime);
+      startInput.dispatchEvent(new Event("change", { bubbles: true }));
+      endInput.dispatchEvent(new Event("change", { bubbles: true }));
       renderSummary();
     }
 
@@ -88,10 +110,14 @@
       renderSummary();
     }
 
+    startDate.addEventListener("input", syncPickerToFields);
     startDate.addEventListener("change", syncPickerToFields);
+    endDate.addEventListener("input", syncPickerToFields);
     endDate.addEventListener("change", syncPickerToFields);
     startInput.addEventListener("change", syncFieldsToPicker);
     endInput.addEventListener("change", syncFieldsToPicker);
+    picker.querySelector(".open-start-date").addEventListener("click", () => openNativePicker(startDate));
+    picker.querySelector(".open-end-date").addEventListener("click", () => openNativePicker(endDate));
 
     row.prepend(picker);
     row.classList.add("range-enhanced");
@@ -103,11 +129,13 @@
     if (!isTrip()) return;
     ensureRows();
     rows.querySelectorAll(".trip-interval").forEach(enhanceRow);
+    rows.querySelectorAll("input, button").forEach(activate);
   }
 
   form.addEventListener("change", event => {
     if (event.target.matches('input[name="schedule_mode"], #plan-type')) queueMicrotask(sync);
   }, true);
-  new MutationObserver(() => queueMicrotask(sync)).observe(rows, { childList: true });
+  document.querySelector("#new-plan-button")?.addEventListener("click", () => setTimeout(sync, 0));
+  new MutationObserver(() => queueMicrotask(sync)).observe(rows, { childList: true, subtree: true });
   queueMicrotask(sync);
 })();
