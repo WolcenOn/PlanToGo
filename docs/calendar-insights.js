@@ -1,9 +1,10 @@
 (() => {
   const planDetails = new Map();
   const groupDetails = new Map();
+  const confirmedIntervals = new Map();
   let enriching = false;
 
-  window.PlanInsights = { planDetails, groupDetails };
+  window.PlanInsights = { planDetails, groupDetails, confirmedIntervals };
 
   function score(option = {}) {
     return (Number(option.yes) || 0) * 2 + (Number(option.maybe) || 0);
@@ -20,6 +21,8 @@
   }
 
   function matchingConfirmedOption(plan) {
+    const persisted = confirmedIntervals.get(plan?.id);
+    if (persisted?.start_time && persisted?.end_time) return persisted;
     if (!plan?.confirmed_date) return null;
     const confirmed = new Date(plan.confirmed_date).getTime();
     const detail = planDetails.get(plan.id);
@@ -77,16 +80,30 @@
     });
   }
 
+  async function enrichPlan(plan) {
+    try {
+      const detail = await fetchJSON(`${API_BASE_URL}/api/v1/plans/${encodeURIComponent(plan.id)}?email=${encodeURIComponent(state.profile.email)}`);
+      planDetails.set(plan.id, detail);
+    } catch (_) {}
+
+    if (!isConfirmed(plan)) {
+      confirmedIntervals.delete(plan.id);
+      return;
+    }
+    try {
+      const body = await fetchJSON(`${API_BASE_URL}/api/v1/plans/${encodeURIComponent(plan.id)}/confirmed-interval?email=${encodeURIComponent(state.profile.email)}`);
+      if (body?.confirmed_interval) confirmedIntervals.set(plan.id, body.confirmed_interval);
+      else confirmedIntervals.delete(plan.id);
+    } catch (_) {
+      confirmedIntervals.delete(plan.id);
+    }
+  }
+
   async function enrichDashboard() {
     if (enriching || !state?.profile?.email) return;
     enriching = true;
     try {
-      await Promise.all((state.plans || []).map(async plan => {
-        try {
-          const detail = await fetchJSON(`${API_BASE_URL}/api/v1/plans/${encodeURIComponent(plan.id)}?email=${encodeURIComponent(state.profile.email)}`);
-          planDetails.set(plan.id, detail);
-        } catch (_) {}
-      }));
+      await Promise.all((state.plans || []).map(enrichPlan));
       await Promise.all((state.groups || []).map(async group => {
         try {
           const detail = await fetchJSON(`${API_BASE_URL}/api/v1/groups/${encodeURIComponent(group.id)}?email=${encodeURIComponent(state.profile.email)}`);
@@ -172,12 +189,17 @@
     if (!currentDetail) return;
     planDetails.set(currentDetail.id, currentDetail);
     const options = currentDetail.date_options || [];
+    const selected = confirmedIntervals.get(currentDetail.id);
     const voting = document.querySelector("#detail-voting");
     if (voting && options.length) voting.hidden = false;
 
     detailOptions.querySelectorAll(".detail-option").forEach((row, index) => {
       const option = options[index];
       if (!option) return;
+      if (selected?.option_id === option.id) {
+        row.classList.add("confirmed-option");
+        row.insertAdjacentHTML("afterbegin", '<span class="tag confirmed-interval">✓ Intervalo confirmado</span>');
+      }
       const names = voteNames(option);
       if (names.length) {
         const groups = ["yes", "maybe", "no"].map(value => {
@@ -207,11 +229,12 @@
     const previousText = button.textContent;
     button.textContent = "Fijando…";
     try {
-      await fetchJSON(`${API_BASE_URL}/api/v1/plans/${encodeURIComponent(currentDetail.id)}/confirm`, {
+      const body = await fetchJSON(`${API_BASE_URL}/api/v1/plans/${encodeURIComponent(currentDetail.id)}/confirm`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ creator_email: state.profile.email, option_id: option.id })
       });
+      if (body?.confirmed_interval) confirmedIntervals.set(currentDetail.id, body.confirmed_interval);
       planDetails.delete(currentDetail.id);
       setDetailStatus("Intervalo fijado correctamente.");
       await loadDashboard();
