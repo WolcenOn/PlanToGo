@@ -6,13 +6,25 @@
   const status = document.querySelector("#form-status");
   if (!form || !planType || !fixedDate || !flexibleBuilder) return;
 
+  function scheduleMode() {
+    return form.querySelector('input[name="schedule_mode"]:checked')?.value || "meetup";
+  }
+
   function syncDateValidation() {
+    const mode = scheduleMode();
+    const trip = mode === "trip";
+    const recurring = mode === "recurring";
     const flexible = planType.value === "flexible";
-    fixedDate.disabled = flexible;
-    fixedDate.required = !flexible;
-    flexibleBuilder.querySelectorAll("input, select, textarea").forEach(input => {
-      input.disabled = !flexible;
-      if (input.classList.contains("option-start") || input.classList.contains("option-end")) input.required = flexible && input.type !== "hidden";
+
+    fixedDate.disabled = recurring || trip || flexible;
+    fixedDate.required = !recurring && !trip && !flexible;
+
+    flexibleBuilder.querySelectorAll("input, select, textarea, button").forEach(control => {
+      const enabled = !recurring && (trip || flexible);
+      control.disabled = !enabled;
+      if (control.classList.contains("option-start") || control.classList.contains("option-end")) {
+        control.required = enabled && control.type !== "hidden";
+      }
     });
   }
 

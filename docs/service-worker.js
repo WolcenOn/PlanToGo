@@ -1,4 +1,4 @@
-const CACHE = "plantogo-shell-v42";
+const CACHE = "plantogo-shell-v43";
 const ASSETS = [
   "./", "./index.html", "./styles.css?v=12", "./smart-modes.css?v=12",
   "./plan-detail.css?v=12", "./group-management.css?v=31",
@@ -6,9 +6,8 @@ const ASSETS = [
   "./calendar-day-page.css?v=30", "./task-subtasks.css?v=30",
   "./event-wizard.css?v=14", "./recurrence-pages.css?v=14",
   "./visibility-fix.css?v=38", "./calendar-insights.css?v=39",
-  "./trip-range-picker.css?v=42", "./config.js?v=12", "./app.js?v=12",
-  "./dashboard-stability.js?v=38", "./smart-modes.js?v=17",
-  "./trip-range-picker.js?v=42", "./trip-fixed-submit.js?v=42",
+  "./trip-range-picker.css?v=43", "./config.js?v=12", "./app.js?v=12",
+  "./dashboard-stability.js?v=38", "./smart-modes.js?v=43",
   "./plan-detail.js?v=12", "./groups.js?v=12", "./group-management.js?v=31",
   "./event-wizard.js?v=14", "./recurrence-ui.js?v=21",
   "./recurrence-form-fix.js?v=18", "./recurrence-editor-fix.js?v=15",
