@@ -10,6 +10,8 @@
   const typeField = planType.closest("label");
   const dateHelp = document.querySelector(".date-scope-helper");
   const builderHeading = flexibleField.querySelector(".builder-heading");
+  const builderTitle = builderHeading?.querySelector("strong");
+  const builderHelp = builderHeading?.querySelector("small");
   const recurringBuilder = document.querySelector("#recurring-builder");
 
   function mode() {
@@ -19,7 +21,8 @@
   function setVisible(node, visible) {
     if (!node) return;
     node.hidden = !visible;
-    node.style.setProperty("display", visible ? "" : "none", visible ? "" : "important");
+    if (visible) node.style.removeProperty("display");
+    else node.style.setProperty("display", "none", "important");
     node.querySelectorAll("input, select, textarea, button").forEach(control => {
       if (!visible) {
         control.dataset.activityDisabled = control.disabled ? "already" : "temporary";
@@ -31,53 +34,93 @@
     });
   }
 
-  function ensureTripInterval() {
-    let row = rows.querySelector(".date-option-input");
-    if (!row || !row.querySelector(".option-end")) {
-      rows.innerHTML = "";
-      row = document.createElement("div");
-      row.className = "date-option-input compact-option trip-interval";
-      row.innerHTML = '<label>Inicio del viaje<input type="datetime-local" class="option-start" required></label><label>Fin del viaje<input type="datetime-local" class="option-end" required></label>';
-      rows.append(row);
-    }
-    [...rows.children].slice(1).forEach(node => node.remove());
-    row.classList.add("trip-interval");
-    row.querySelector(".remove-option")?.remove();
-    const labels = row.querySelectorAll("label");
-    if (labels[0]) labels[0].childNodes[0].textContent = "Inicio del viaje";
-    if (labels[1]) labels[1].childNodes[0].textContent = "Fin del viaje";
+  function buildTripRow(values = {}) {
+    const row = document.createElement("div");
+    row.className = "date-option-input compact-option trip-interval";
+    row.innerHTML = `<label>Inicio del viaje<input type="datetime-local" class="option-start" value="${values.start || ""}" required></label><label>Fin del viaje<input type="datetime-local" class="option-end" value="${values.end || ""}" required></label><button type="button" class="icon-button remove-option" aria-label="Eliminar intervalo">×</button>`;
+    row.querySelector(".remove-option").addEventListener("click", () => {
+      const minimum = planType.value === "flexible" ? 2 : 1;
+      if (rows.children.length > minimum) row.remove();
+    });
+    rows.append(row);
+    return row;
+  }
+
+  function ensureTripRows() {
+    const desiredMinimum = planType.value === "flexible" ? 2 : 1;
+    const existing = [...rows.querySelectorAll(".date-option-input")].map(row => ({
+      start: row.querySelector(".option-start")?.value || "",
+      end: row.querySelector(".option-end")?.value || ""
+    }));
+    const needsRebuild = [...rows.children].some(row => !row.classList.contains("trip-interval"));
+    if (needsRebuild) rows.innerHTML = "";
+    while (rows.children.length < desiredMinimum) buildTripRow(existing[rows.children.length] || {});
+    if (planType.value === "fixed") [...rows.children].slice(1).forEach(node => node.remove());
+    rows.querySelectorAll(".remove-option").forEach(button => {
+      button.hidden = rows.children.length <= desiredMinimum;
+    });
   }
 
   function sync() {
     const current = mode();
     const recurring = current === "recurring";
     const trip = current === "trip";
-    const meetupLike = !recurring && !trip;
+    const flexible = planType.value === "flexible";
 
-    if (trip) planType.value = "flexible";
-
-    setVisible(typeField, meetupLike);
-    setVisible(fixedField, meetupLike && planType.value === "fixed");
-    setVisible(flexibleField, trip || recurring || (meetupLike && planType.value === "flexible"));
-
-    if (trip) ensureTripInterval();
-    setVisible(rows, trip || (meetupLike && planType.value === "flexible"));
-    setVisible(addButton, meetupLike && planType.value === "flexible");
-    setVisible(builderHeading, meetupLike && planType.value === "flexible");
-    setVisible(dateHelp, meetupLike && planType.value === "flexible");
+    // Quedadas, cine y viajes siempre permiten escoger entre fecha fija y votación.
+    setVisible(typeField, !recurring);
     setVisible(recurringBuilder, recurring);
 
-    form.elements.confirmed_date.required = meetupLike && planType.value === "fixed";
+    if (recurring) {
+      setVisible(fixedField, false);
+      setVisible(flexibleField, true);
+      setVisible(rows, false);
+      setVisible(addButton, false);
+      setVisible(builderHeading, false);
+      setVisible(dateHelp, false);
+      form.elements.confirmed_date.required = false;
+      return;
+    }
+
+    if (trip) {
+      ensureTripRows();
+      setVisible(fixedField, false);
+      setVisible(flexibleField, true);
+      setVisible(rows, true);
+      setVisible(builderHeading, true);
+      setVisible(addButton, flexible);
+      setVisible(dateHelp, flexible);
+      if (builderTitle) builderTitle.textContent = flexible ? "Intervalos de viaje para votar" : "Intervalo fijo del viaje";
+      if (builderHelp) builderHelp.textContent = flexible ? "Añade al menos dos periodos completos." : "Indica el comienzo y el final del viaje.";
+      form.elements.confirmed_date.required = false;
+      return;
+    }
+
+    setVisible(fixedField, !flexible);
+    setVisible(flexibleField, flexible);
+    setVisible(rows, flexible);
+    setVisible(addButton, flexible);
+    setVisible(builderHeading, flexible);
+    setVisible(dateHelp, flexible);
+    form.elements.confirmed_date.required = !flexible;
   }
 
   form.addEventListener("change", event => {
     if (event.target.matches('input[name="schedule_mode"], #plan-type')) queueMicrotask(sync);
   }, true);
 
-  // Viaje admite un único intervalo inicio/fin. El formulario general exige dos
-  // opciones porque las quedadas flexibles están pensadas para votación.
+  addButton.addEventListener("click", event => {
+    if (mode() !== "trip" || planType.value !== "flexible") return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    buildTripRow();
+    sync();
+  }, true);
+
+  // Un viaje fijo necesita conservar inicio y fin. El modelo actual almacena los
+  // intervalos en date_options, por lo que se crea como una única opción cerrada.
   form.addEventListener("submit", async event => {
-    if (mode() !== "trip") return;
+    if (mode() !== "trip" || planType.value !== "fixed") return;
     event.preventDefault();
     event.stopImmediatePropagation();
 
