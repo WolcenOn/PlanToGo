@@ -37,20 +37,34 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+function loadScriptOnce(src, marker) {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[${marker}]`);
+    if (existing) {
+      if (existing.dataset.loaded === "true") resolve();
+      else existing.addEventListener("load", resolve, { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = src;
+    script.setAttribute(marker, "true");
+    script.addEventListener("load", () => { script.dataset.loaded = "true"; resolve(); }, { once: true });
+    script.addEventListener("error", reject, { once: true });
+    document.body.append(script);
+  });
+}
+
 function loadCalendarInsights() {
   if (!document.querySelector('link[data-calendar-insights]')) {
     const style = document.createElement("link");
     style.rel = "stylesheet";
-    style.href = "./calendar-insights.css?v=45";
+    style.href = "./calendar-insights.css?v=46";
     style.dataset.calendarInsights = "true";
     document.head.append(style);
   }
-  if (!document.querySelector('script[data-calendar-insights]')) {
-    const script = document.createElement("script");
-    script.src = "./calendar-insights.js?v=45";
-    script.dataset.calendarInsights = "true";
-    document.body.append(script);
-  }
+  loadScriptOnce("./calendar-insights.js?v=46", "data-calendar-insights")
+    .then(() => loadScriptOnce("./trip-calendar-source.js?v=46", "data-trip-calendar-source"))
+    .catch(error => console.error("No se pudo cargar el calendario de viajes", error));
 }
 
 syncInstallButton();
