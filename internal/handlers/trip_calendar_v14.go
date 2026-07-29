@@ -81,7 +81,7 @@ func (api *API) listTripCalendarIntervals(w http.ResponseWriter, r *http.Request
 		       COUNT(*) FILTER (WHERE v.vote='yes')::int,
 		       COUNT(*) FILTER (WHERE v.vote='maybe')::int,
 		       COUNT(*) FILTER (WHERE v.vote='no')::int,
-		       (p.confirmed_option_id=o.id)
+		       COALESCE(p.confirmed_option_id=o.id,false)
 		FROM users u
 		JOIN plans p ON p.created_by=u.id
 		  OR p.group_id IN (SELECT gm.group_id FROM group_members gm WHERE gm.user_id=u.id)
