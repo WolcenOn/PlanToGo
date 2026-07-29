@@ -28,8 +28,10 @@
 
   function validRange(interval) {
     if (!interval?.start_time || !interval?.end_time) return null;
-    const start = dayStart(interval.start_time).getTime();
-    const end = dayStart(interval.end_time).getTime();
+    const startDate = dayStart(interval.start_time);
+    const endDate = dayStart(interval.end_time);
+    const start = startDate.getTime();
+    const end = endDate.getTime();
     if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return null;
     return { start, end };
   }
@@ -51,11 +53,10 @@
     await baseLoadDashboard();
     try {
       await loadTripIntervals();
-      renderDashboard();
     } catch (error) {
       console.error("No se pudieron cargar los intervalos de viaje", error);
-      renderDashboard();
     }
+    renderDashboard();
   };
 
   const basePlansForDate = plansForDate;
@@ -74,10 +75,17 @@
 
       replacedTripIDs.add(plan.id);
       if (target < range.start || target > range.end) continue;
-      plan._calendarPending = trip.status !== "confirmed";
-      plan._calendarSegment = range.start === range.end ? "single" : target === range.start ? "start" : target === range.end ? "end" : "middle";
-      plan._calendarTripInterval = interval;
-      travelPlans.push(plan);
+
+      const segment = range.start === range.end ? "single" : target === range.start ? "start" : target === range.end ? "end" : "middle";
+      travelPlans.push({
+        ...plan,
+        confirmed_date: interval.start_time,
+        _calendarPending: trip.status !== "confirmed",
+        _calendarSegment: segment,
+        _calendarTripInterval: { ...interval },
+        _calendarRangeStart: interval.start_time,
+        _calendarRangeEnd: interval.end_time
+      });
     }
 
     const base = originalPlans.filter(plan => !replacedTripIDs.has(plan.id));
@@ -89,7 +97,8 @@
     baseRenderPlanDetail();
     if (!currentDetail?.id) return;
     const trip = trips.get(currentDetail.id);
-    const dateInput = detailEditForm?.elements?.confirmed_date;
+    const detailForm = document.querySelector("#detail-edit-form");
+    const dateInput = detailForm?.elements?.confirmed_date;
     const dateLabel = dateInput?.closest("label");
     if (dateLabel) {
       dateLabel.hidden = Boolean(trip);
