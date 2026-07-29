@@ -54,18 +54,18 @@ function loadScriptOnce(src, marker) {
   });
 }
 
-function loadCalendarInsights() {
+function loadCalendar() {
   if (!document.querySelector('link[data-calendar-insights]')) {
     const style = document.createElement("link");
     style.rel = "stylesheet";
-    style.href = "./calendar-insights.css?v=48";
+    style.href = "./calendar-insights.css?v=49";
     style.dataset.calendarInsights = "true";
     document.head.append(style);
   }
-  loadScriptOnce("./calendar-insights.js?v=48", "data-calendar-insights")
-    .then(() => loadScriptOnce("./trip-calendar-source.js?v=48", "data-trip-calendar-source"))
-    .catch(error => console.error("No se pudo cargar el calendario de viajes", error));
+  loadScriptOnce("./calendar-insights.js?v=49", "data-calendar-insights")
+    .then(() => loadScriptOnce("./schedule-calendar.js?v=49", "data-schedule-calendar"))
+    .catch(error => console.error("No se pudo cargar el calendario", error));
 }
 
 syncInstallButton();
-loadCalendarInsights();
+loadCalendar();
