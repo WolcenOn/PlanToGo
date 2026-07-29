@@ -1,4 +1,4 @@
-const CACHE = "plantogo-shell-v40";
+const CACHE = "plantogo-shell-v41";
 const ASSETS = [
   "./", "./index.html", "./styles.css?v=12", "./smart-modes.css?v=12",
   "./plan-detail.css?v=12", "./group-management.css?v=31",
@@ -30,7 +30,7 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET" || new URL(event.request.url).origin !== self.location.origin) return;
-  event.respondWith(fetch(event.request).then(response => {
+  event.respondWith(fetch(event.request, { cache: "no-store" }).then(response => {
     const copy = response.clone();
     caches.open(CACHE).then(cache => cache.put(event.request, copy));
     return response;
