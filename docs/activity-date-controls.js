@@ -13,6 +13,20 @@
   const builderTitle = builderHeading?.querySelector("strong");
   const builderHelp = builderHeading?.querySelector("small");
   const recurringBuilder = document.querySelector("#recurring-builder");
+  const modePanel = document.querySelector(".schedule-mode-panel");
+
+  // El selector de actividad se crea originalmente dentro del bloque flexible.
+  // Ese bloque puede ocultarse para fechas fijas, por lo que el selector debe
+  // moverse fuera antes de aplicar cualquier visibilidad condicional.
+  if (modePanel && flexibleField.contains(modePanel) && typeField) {
+    typeField.before(modePanel);
+    modePanel.hidden = false;
+    modePanel.style.removeProperty("display");
+    modePanel.querySelectorAll("input, select, textarea, button").forEach(control => {
+      control.disabled = false;
+      delete control.dataset.activityDisabled;
+    });
+  }
 
   function mode() {
     return form.querySelector('input[name="schedule_mode"]:checked')?.value || "meetup";
@@ -76,6 +90,7 @@
     const trip = current === "trip";
     const flexible = planType.value === "flexible";
 
+    if (modePanel) setVisible(modePanel, true);
     setVisible(typeField, !recurring);
     setVisible(recurringBuilder, recurring);
 
@@ -141,8 +156,6 @@
     }
   }, true);
 
-  // Un viaje fijo necesita conservar inicio y fin. El modelo actual almacena los
-  // intervalos en date_options, por lo que se crea como una única opción cerrada.
   form.addEventListener("submit", async event => {
     if (mode() !== "trip" || planType.value !== "fixed") return;
     event.preventDefault();
