@@ -9,6 +9,10 @@
     return (Number(option.yes) || 0) * 2 + (Number(option.maybe) || 0);
   }
 
+  function isConfirmed(plan) {
+    return plan?.status === "confirmed";
+  }
+
   function bestOption(plan) {
     const detail = planDetails.get(plan?.id);
     const options = Array.isArray(detail?.date_options) ? detail.date_options : [];
@@ -22,9 +26,13 @@
     return (detail?.date_options || []).find(option => Math.abs(new Date(option.start_time).getTime() - confirmed) < 60000) || null;
   }
 
+  function displayedOption(plan) {
+    return isConfirmed(plan) ? matchingConfirmedOption(plan) : bestOption(plan);
+  }
+
   function planRange(plan) {
-    const option = plan?.confirmed_date ? matchingConfirmedOption(plan) : bestOption(plan);
-    const startValue = plan?.confirmed_date || option?.start_time;
+    const option = displayedOption(plan);
+    const startValue = option?.start_time || plan?.confirmed_date;
     if (!startValue) return null;
     const start = new Date(startValue);
     const end = new Date(option?.end_time || startValue);
@@ -105,7 +113,7 @@
       const start = dayStart(range.start).getTime();
       const end = dayStart(range.end).getTime();
       if (target < start || target > end) return false;
-      plan._calendarPending = !plan.confirmed_date;
+      plan._calendarPending = !isConfirmed(plan);
       plan._calendarHue = groupHue(plan);
       plan._calendarSegment = start === end ? "single" : target === start ? "start" : target === end ? "end" : "middle";
       return true;
@@ -114,9 +122,9 @@
 
   eventMarkup = function eventMarkupWithRange(plan) {
     const segment = plan._calendarSegment || "single";
-    const pending = plan._calendarPending ? " pending" : "";
+    const pending = plan._calendarPending ? " pending" : " confirmed";
     const label = segment === "middle" || segment === "end" ? "" : escapeText(plan.title || "Plan");
-    const status = plan._calendarPending ? " · por confirmar" : "";
+    const status = plan._calendarPending ? " · por confirmar" : " · confirmado";
     return `<div class="calendar-event ${plan.ownership || "own"} range-${segment}${pending}" style="--group-hue:${plan._calendarHue || groupHue(plan)}" title="${escapeText(plan.title || "Plan")}${status}" data-plan-id="${escapeText(plan.id || "")}"><i></i><span>${label}</span></div>`;
   };
 
@@ -124,7 +132,7 @@
   renderPlans = function renderPlansWithInsights() {
     originalRenderPlans();
     const plans = filteredPlans();
-    const pendingCount = (state.plans || []).filter(plan => !plan.confirmed_date).length;
+    const pendingCount = (state.plans || []).filter(plan => !isConfirmed(plan)).length;
     const title = document.querySelector("#plans-section h2");
     if (title) title.innerHTML = `Tus próximos planes${pendingCount ? `<span class="pending-alert" title="${pendingCount} planes por confirmar"><i></i>${pendingCount}</span>` : ""}`;
 
@@ -133,11 +141,12 @@
       if (!plan) return;
       card.dataset.planId = plan.id || "";
       const tags = card.querySelector(".plan-tags");
-      if (!plan.confirmed_date && tags && !tags.querySelector(".tag.pending-date")) tags.insertAdjacentHTML("beforeend", '<span class="tag pending-date"><i></i>Por confirmar</span>');
-      const option = bestOption(plan);
+      if (!isConfirmed(plan) && tags && !tags.querySelector(".tag.pending-date")) tags.insertAdjacentHTML("beforeend", '<span class="tag pending-date"><i></i>Por confirmar</span>');
+      const option = displayedOption(plan);
       if (option) {
         const badge = card.querySelector(".date-badge");
-        if (badge) badge.innerHTML = `<strong>★</strong><span><small>Más votada</small>${escapeText(formatRange(option))}</span>`;
+        const caption = isConfirmed(plan) ? "Intervalo fijado" : "Más votada";
+        if (badge) badge.innerHTML = `<strong>${isConfirmed(plan) ? "✓" : "★"}</strong><span><small>${caption}</small>${escapeText(formatRange(option))}</span>`;
       }
     });
   };
@@ -182,7 +191,7 @@
         button.type = "button";
         button.className = "secondary-button confirm-option-button";
         button.dataset.optionIndex = String(index);
-        button.textContent = "Fijar esta fecha";
+        button.textContent = "Fijar este intervalo";
         row.append(button);
       }
     });
@@ -190,21 +199,27 @@
 
   detailOptions?.addEventListener("click", async event => {
     const button = event.target.closest(".confirm-option-button");
-    if (!button || !currentDetail?.is_owner) return;
+    if (!button || !currentDetail?.is_owner || button.dataset.confirming === "true") return;
     const option = currentDetail.date_options?.[Number(button.dataset.optionIndex)];
-    if (!option || !confirm(`¿Fijar ${formatRange(option)} como fecha definitiva?`)) return;
+    if (!option || !confirm(`¿Fijar ${formatRange(option)} como intervalo definitivo?`)) return;
+    button.dataset.confirming = "true";
     button.disabled = true;
+    const previousText = button.textContent;
+    button.textContent = "Fijando…";
     try {
-      await fetchJSON(`${API_BASE_URL}/api/v1/plans/${currentDetail.id}`, {
-        method: "PATCH",
+      await fetchJSON(`${API_BASE_URL}/api/v1/plans/${encodeURIComponent(currentDetail.id)}/confirm`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ creator_email: state.profile.email, confirmed_date: new Date(option.start_time).toISOString() })
+        body: JSON.stringify({ creator_email: state.profile.email, option_id: option.id })
       });
-      setDetailStatus("Fecha fijada.");
+      planDetails.delete(currentDetail.id);
+      setDetailStatus("Intervalo fijado correctamente.");
       await loadDashboard();
       await openPlanDetail(currentDetail.id);
     } catch (error) {
+      button.dataset.confirming = "false";
       button.disabled = false;
+      button.textContent = previousText;
       setDetailStatus(error.message, true);
     }
   });
