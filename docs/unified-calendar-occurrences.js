@@ -67,7 +67,10 @@
       const key = calendarCellKey(date);
       const occurrences = Array.isArray(state.occurrences) ? state.occurrences : [];
       const recurringPlanIDs = new Set(occurrences.map(item => item.plan_id).filter(Boolean));
-      const normal = previousPlansForDate(date).filter(plan => !recurringPlanIDs.has(plan.id));
+      const normal = previousPlansForDate(date).filter(plan => {
+        const recurringMode = plan.schedule_mode === "recurring" || plan.recurring === true;
+        return !recurringMode && !recurringPlanIDs.has(plan.id);
+      });
       const recurring = occurrences
         .filter(item => zonedDateKey(item.starts_at) === key)
         .map(recurringOccurrence);
