@@ -31,7 +31,7 @@ window.addEventListener("appinstalled", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js").catch(error => {
+    navigator.serviceWorker.register("./service-worker.js?v=51").catch(error => {
       console.error("No se pudo registrar la PWA", error);
     });
   });
@@ -58,13 +58,14 @@ function loadCalendarInsights() {
   if (!document.querySelector('link[data-calendar-insights]')) {
     const style = document.createElement("link");
     style.rel = "stylesheet";
-    style.href = "./calendar-insights.css?v=48";
+    style.href = "./calendar-insights.css?v=51";
     style.dataset.calendarInsights = "true";
     document.head.append(style);
   }
-  loadScriptOnce("./calendar-insights.js?v=48", "data-calendar-insights")
-    .then(() => loadScriptOnce("./trip-calendar-source.js?v=48", "data-trip-calendar-source"))
-    .catch(error => console.error("No se pudo cargar el calendario de viajes", error));
+  loadScriptOnce("./calendar-insights.js?v=51", "data-calendar-insights")
+    .then(() => loadScriptOnce("./trip-calendar-source.js?v=51", "data-trip-calendar-source"))
+    .then(() => loadScriptOnce("./unified-calendar-occurrences.js?v=51", "data-unified-calendar-occurrences"))
+    .catch(error => console.error("No se pudo cargar el calendario", error));
 }
 
 syncInstallButton();
