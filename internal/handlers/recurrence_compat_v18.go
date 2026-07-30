@@ -35,17 +35,49 @@ func NewRouterV18(db *pgxpool.Pool, origins []string) http.Handler {
 		}
 		_ = json.Unmarshal(legacyRecorder.Body.Bytes(), &legacyBody)
 		_ = json.Unmarshal(newRecorder.Body.Bytes(), &newBody)
+
+		// As soon as a plan has been edited with the v2 rule editor, its v2
+		// schedule becomes the sole source of truth. Mixing legacy and v2
+		// occurrences makes removed weekdays reappear and can hide newly added
+		// weekdays behind stale sessions from the old recurrence model.
+		v2PlanIDs := map[string]bool{}
+		for _, item := range newBody.Occurrences {
+			if planID, _ := item["plan_id"].(string); planID != "" {
+				v2PlanIDs[planID] = true
+			}
+		}
+		rows, err := db.Query(r.Context(), `SELECT plan_id::text FROM plan_recurrence_series_v2`)
+		if err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var planID string
+				if rows.Scan(&planID) == nil {
+					v2PlanIDs[planID] = true
+				}
+			}
+		}
+
 		seen := map[string]bool{}
 		merged := make([]map[string]any, 0, len(legacyBody.Occurrences)+len(newBody.Occurrences))
-		for _, item := range append(newBody.Occurrences, legacyBody.Occurrences...) {
+		appendUnique := func(item map[string]any) {
 			planID, _ := item["plan_id"].(string)
 			start, _ := item["starts_at"].(string)
 			key := planID + "|" + start
-			if seen[key] {
-				continue
+			if planID == "" || start == "" || seen[key] {
+				return
 			}
 			seen[key] = true
 			merged = append(merged, item)
+		}
+		for _, item := range newBody.Occurrences {
+			appendUnique(item)
+		}
+		for _, item := range legacyBody.Occurrences {
+			planID, _ := item["plan_id"].(string)
+			if v2PlanIDs[planID] {
+				continue
+			}
+			appendUnique(item)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"occurrences": merged})
 	})
