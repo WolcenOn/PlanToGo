@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -48,8 +49,20 @@ func NewRouterV18(db *pgxpool.Pool, origins []string) http.Handler {
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"occurrences": merged})
 	})
-	mux.HandleFunc("PATCH /api/v1/plans/{id}/occurrences/{occurrenceID}", api.overrideOccurrenceV17)
-	mux.HandleFunc("DELETE /api/v1/plans/{id}/occurrences/{occurrenceID}", api.deleteOccurrenceV17)
+	mux.HandleFunc("PATCH /api/v1/plans/{id}/occurrences/{occurrenceID}", func(w http.ResponseWriter, r *http.Request) {
+		if _, err := time.Parse("2006-01-02", r.PathValue("occurrenceID")); err != nil {
+			legacy.ServeHTTP(w, r)
+			return
+		}
+		api.overrideOccurrenceV17(w, r)
+	})
+	mux.HandleFunc("DELETE /api/v1/plans/{id}/occurrences/{occurrenceID}", func(w http.ResponseWriter, r *http.Request) {
+		if _, err := time.Parse("2006-01-02", r.PathValue("occurrenceID")); err != nil {
+			legacy.ServeHTTP(w, r)
+			return
+		}
+		api.deleteOccurrenceV17(w, r)
+	})
 	mux.Handle("/", NewRouterV16(db, origins))
 	return corsWithWrites(origins, securityHeaders(mux))
 }
