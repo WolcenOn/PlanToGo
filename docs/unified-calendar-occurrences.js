@@ -34,6 +34,31 @@
     };
   }
 
+  async function refreshOccurrences() {
+    if (window.PlanRecurrence?.refreshCalendar) {
+      await window.PlanRecurrence.refreshCalendar();
+    } else {
+      renderCalendar();
+    }
+  }
+
+  function installMutationRefresh() {
+    if (window.__planToGoRecurrenceFetchWrapped) return;
+    window.__planToGoRecurrenceFetchWrapped = true;
+    const baseFetch = window.fetch.bind(window);
+    window.fetch = async function fetchWithCalendarRefresh(input, init = {}) {
+      const response = await baseFetch(input, init);
+      const url = typeof input === "string" ? input : input?.url || "";
+      const method = String(init.method || (typeof input !== "string" ? input?.method : "GET") || "GET").toUpperCase();
+      const mutation = ["POST", "PUT", "PATCH", "DELETE"].includes(method);
+      const recurrenceURL = /\/api\/v1\/plans\/[^/]+\/(recurrence|occurrences\/)/.test(url);
+      if (response.ok && mutation && recurrenceURL) {
+        queueMicrotask(() => refreshOccurrences().catch(error => console.error("No se pudo actualizar el calendario", error)));
+      }
+      return response;
+    };
+  }
+
   function install() {
     if (typeof plansForDate !== "function") return false;
     const previousPlansForDate = plansForDate;
@@ -58,16 +83,8 @@
       });
     };
 
-    window.PlanCalendarOccurrences = {
-      zonedDateKey,
-      refresh: async () => {
-        if (window.PlanRecurrence?.refreshCalendar) {
-          await window.PlanRecurrence.refreshCalendar();
-        } else {
-          renderCalendar();
-        }
-      }
-    };
+    window.PlanCalendarOccurrences = { zonedDateKey, refresh: refreshOccurrences };
+    installMutationRefresh();
     renderCalendar();
     return true;
   }
